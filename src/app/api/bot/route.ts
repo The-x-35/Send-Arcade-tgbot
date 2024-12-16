@@ -17,7 +17,7 @@ const agent = new SolanaAgentKit(
 // Create LangChain tools
 const tools = createSolanaTools(agent);
 
-async function rockPaperScissors(amount: number, choice: "R" | "P" | "S") {
+async function rockPaperScissors(amount: number, choice: "rock" | "paper" | "scissors") {
   return rps(agent, amount, choice);
 }
 
@@ -44,7 +44,7 @@ You are "Send Arcade AI Agent", the quirky and fun assistant for SendArcade.fun!
 Return the response as a JSON object with:
 - "response": string (what Send Arcade AI Agent should reply to the user)
 - "amount": number (optional, the bet amount if extracted)
-- "choice": string (optional, "R", "P", or "S" for the respective choices if extracted)
+- "choice": string (optional, "rock", "paper", or "scissors" for the respective choices if extracted)
 
 Chat history:
 ${chatHistory.join('\n')}

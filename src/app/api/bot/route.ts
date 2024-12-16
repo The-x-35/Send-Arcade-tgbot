@@ -29,30 +29,33 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || 'key' });
 const bot = new Bot(token);
 
 // User state to track ongoing conversations
-const userStates: Record<string, { wantsToPlay?: boolean; amount?: number; choice?: "R" | "P" | "S" }> = {};
+const userStates: Record<string, { chatHistory: string[] }> = {};
 
 // OpenAI message analysis
-async function analyzeChatWithOpenAI(chat: string): Promise<{ intent?: string; amount?: number; choice?: "R" | "P" | "S" }> {
+async function analyzeChatWithOpenAI(chatHistory: string[]): Promise<{ response: string; amount?: number; choice?: "R" | "P" | "S" }> {
   const prompt = `
-Analyze the following user input for the intent to play Rock-Paper-Scissors:
-1. If the user intends to play, return "intent": "play".
-2. Extract the "amount" (a number) if specified.
-3. Extract the "choice" ("R" for rock, "P" for paper, or "S" for scissors) if specified.
-4. If no valid information is found, return an empty object.
-
-User input: "${chat}"`;
+You are an assistant helping with general conversations. If the user indicates an intent to play Rock-Paper-Scissors:
+1. Extract the "amount" (a number) they want to bet.
+2. Extract the "choice" ("R", "P", or "S").
+3. Provide a natural language response based on the current conversation.
+Return the response as a JSON object with keys "response" (string), and optionally "amount" and "choice".
+Chat history:
+${chatHistory.join('\n')}
+`;
   const response = await openai.chat.completions.create({
     model: 'gpt-3.5-turbo',
     messages: [{ role: 'system', content: prompt }],
-    max_tokens: 100,
+    max_tokens: 300,
     temperature: 0.7,
   });
 
   try {
-    if (!response.choices[0].message.content) return {};
+    if (!response.choices[0].message.content) {
+      return { response: "I'm not sure how to respond to that." };
+    }
     return JSON.parse(response.choices[0].message.content.trim());
   } catch {
-    return {};
+    return { response: "Sorry, I couldn't process your request. Can you clarify?" };
   }
 }
 
@@ -61,49 +64,35 @@ bot.on('message:text', async (ctx) => {
   const userId = ctx.from?.id.toString();
   if (!userId) return;
 
-  const userState = userStates[userId] || {};
-
-  // Analyze user input using OpenAI
-  const analysis = await analyzeChatWithOpenAI(ctx.message.text);
-
-  // Check for play intent
-  if (!userState.wantsToPlay && analysis.intent === 'play') {
-    userState.wantsToPlay = true;
-    userStates[userId] = userState;
-    await ctx.reply("Got it! Let's play Rock-Paper-Scissors. How much do you want to bet?");
-    return;
+  // Initialize user state if not already present
+  if (!userStates[userId]) {
+    userStates[userId] = { chatHistory: [] };
   }
 
-  // Extract the betting amount
-  if (userState.wantsToPlay && !userState.amount && analysis.amount) {
-    userState.amount = analysis.amount;
-    userStates[userId] = userState;
-    await ctx.reply("Got the amount you want to bet! Now, what's your choice Rock, Paper or Scissors?");
-    return;
-  }
+  const userState = userStates[userId];
+  const userMessage = ctx.message.text;
 
-  // Extract the choice
-  if (userState.wantsToPlay && userState.amount && !userState.choice && analysis.choice) {
-    userState.choice = analysis.choice;
+  // Add the user's message to chat history
+  userState.chatHistory.push(`User: ${userMessage}`);
 
-    // Call the game function
-    const result = await rockPaperScissors(userState.amount, userState.choice);
+  // Analyze the chat history using OpenAI
+  const analysis = await analyzeChatWithOpenAI(userState.chatHistory);
 
-    // Respond with the result
-    await ctx.reply(`You chose ${userState.choice} with a bet of ${userState.amount}. Result: ${result}`);
+  // Add OpenAI's response to the chat history
+  userState.chatHistory.push(`Assistant: ${analysis.response}`);
 
-    // Clear the state
+  // Send OpenAI's response back to the user
+  await ctx.reply(analysis.response);
+
+  // Check if we have both the amount and choice to play the game
+  if (analysis.amount && analysis.choice) {
+    const result = await rockPaperScissors(analysis.amount, analysis.choice);
+
+    // Inform the user of the result
+    await ctx.reply(`You chose ${analysis.choice} with a bet of ${analysis.amount}. Result: ${result}`);
+
+    // Clear the state for the user
     delete userStates[userId];
-    return;
-  }
-
-  // Generic responses if no clear intent or missing details
-  if (!userState.wantsToPlay) {
-    await ctx.reply("I'm here to help! Let me know if you'd like to play Rock-Paper-Scissors or ask me anything else.");
-  } else if (!userState.amount) {
-    await ctx.reply("Please specify the amount you'd like to bet.");
-  } else if (!userState.choice) {
-    await ctx.reply("Got the amount you want to bet! Now, what's your choice Rock, Paper or Scissors?");
   }
 });
 

@@ -32,7 +32,7 @@ const bot = new Bot(token);
 const userStates: Record<string, { chatHistory: string[] }> = {};
 
 // OpenAI message analysis
-async function analyzeChatWithOpenAI(chatHistory: string[]): Promise<{ response: string; amount?: number; choice?: "R" | "P" | "S" }> {
+async function analyzeChatWithOpenAI(chatHistory: string[]): Promise<{ response: string; amount?: number; choice?: "rock" | "paper" | "scissors" }> {
   const prompt = `
 You are "Send Arcade AI Agent", the quirky and fun assistant for SendArcade.fun! Your mission:
 - Engage users in playful, witty conversations about gaming.

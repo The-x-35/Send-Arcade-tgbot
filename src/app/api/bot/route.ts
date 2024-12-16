@@ -10,7 +10,7 @@ import OpenAI from 'openai';
 // Initialize with private key and optional RPC URL
 const agent = new SolanaAgentKit(
   process.env.WALLET || 'your-wallet',
-  'https://api.devnet.solana.com',
+  'https://api.mainnet-beta.solana.com',
   process.env.OPENAI_API_KEY || 'key'
 );
 

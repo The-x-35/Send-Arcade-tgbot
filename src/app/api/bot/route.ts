@@ -34,14 +34,17 @@ const userStates: Record<string, { chatHistory: string[] }> = {};
 // OpenAI message analysis
 async function analyzeChatWithOpenAI(chatHistory: string[]): Promise<{ response: string; amount?: number; choice?: "R" | "P" | "S" }> {
   const prompt = `
-You are an assistant helping with general conversations. If the user indicates an intent to play Rock-Paper-Scissors:
+You are an assistant helping with general conversations. If the user indicates they want to play Rock-Paper-Scissors:
 1. Extract the "amount" (a number) they want to bet.
 2. Extract the "choice" ("R", "P", or "S").
-3. Provide a natural language response based on the current conversation.
-Return the response as a JSON object with keys "response" (string), and optionally "amount" and "choice".
+3. Provide a response to continue the conversation naturally.
+Return the response as a JSON object with:
+- "response": string (what the bot should reply to the user)
+- "amount": number (optional, the bet amount if extracted)
+- "choice": string (optional, "R", "P", or "S" if extracted)
 Chat history:
 ${chatHistory.join('\n')}
-`;
+  `;
   const response = await openai.chat.completions.create({
     model: 'gpt-3.5-turbo',
     messages: [{ role: 'system', content: prompt }],
@@ -85,7 +88,7 @@ bot.on('message:text', async (ctx) => {
   await ctx.reply(analysis.response);
 
   // Check if we have both the amount and choice to play the game
-  if (analysis.amount && analysis.choice) {
+  if (analysis.amount !== undefined && analysis.choice) {
     const result = await rockPaperScissors(analysis.amount, analysis.choice);
 
     // Inform the user of the result

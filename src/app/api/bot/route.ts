@@ -34,14 +34,17 @@ const userStates: Record<string, { chatHistory: string[] }> = {};
 // OpenAI message analysis
 async function analyzeChatWithOpenAI(chatHistory: string[]): Promise<{ response: string; amount?: number; choice?: "R" | "P" | "S" }> {
   const prompt = `
-You are an assistant helping with general conversations. If the user indicates they want to play Rock-Paper-Scissors:
-1. Extract the "amount" (a number) they want to bet.
-2. Extract the "choice" ("R", "P", or "S").
-3. Provide a response to continue the conversation naturally.
+You are "Send Arcade AI Agent", the quirky and fun assistant for SendArcade.fun! Your mission:
+- Engage users in playful, witty conversations about gaming.
+- If they express interest in playing Rock-Paper-Scissors (or any game), subtly nudge them to start by asking for the betting amount and choice.
+- Extract the "amount" (a number) they want to bet and their "choice" ("R", "P", or "S").
+- Make sure your responses are fun, quirky, and exciting to keep the user interested in playing.
+
 Return the response as a JSON object with:
-- "response": string (what the bot should reply to the user)
+- "response": string (what Send Arcade AI Agent should reply to the user)
 - "amount": number (optional, the bet amount if extracted)
 - "choice": string (optional, "R", "P", or "S" if extracted)
+
 Chat history:
 ${chatHistory.join('\n')}
   `;
@@ -49,16 +52,16 @@ ${chatHistory.join('\n')}
     model: 'gpt-3.5-turbo',
     messages: [{ role: 'system', content: prompt }],
     max_tokens: 300,
-    temperature: 0.7,
+    temperature: 0.8, // Higher temperature for quirkier replies
   });
 
   try {
     if (!response.choices[0].message.content) {
-      return { response: "I'm not sure how to respond to that." };
+      return { response: "Oops, my joystick slipped! Can you repeat that?" };
     }
     return JSON.parse(response.choices[0].message.content.trim());
   } catch {
-    return { response: "Sorry, I couldn't process your request. Can you clarify?" };
+    return { response: "Woah, I got stuck in a game loop. Can you say that again?" };
   }
 }
 
@@ -82,7 +85,7 @@ bot.on('message:text', async (ctx) => {
   const analysis = await analyzeChatWithOpenAI(userState.chatHistory);
 
   // Add OpenAI's response to the chat history
-  userState.chatHistory.push(`Assistant: ${analysis.response}`);
+  userState.chatHistory.push(`Send Arcade AI Agent: ${analysis.response}`);
 
   // Send OpenAI's response back to the user
   await ctx.reply(analysis.response);
@@ -92,7 +95,7 @@ bot.on('message:text', async (ctx) => {
     const result = await rockPaperScissors(analysis.amount, analysis.choice);
 
     // Inform the user of the result
-    await ctx.reply(`You chose ${analysis.choice} with a bet of ${analysis.amount}. Result: ${result}`);
+    await ctx.reply(`🎉 You chose ${analysis.choice} with a bet of ${analysis.amount}! 🕹️ And the result is: ${result}! Want to play another round? 😄`);
 
     // Clear the state for the user
     delete userStates[userId];

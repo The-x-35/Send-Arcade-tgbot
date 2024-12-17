@@ -93,6 +93,7 @@ bot.on('message:text', async (ctx) => {
 
   // Check if we have both the amount and choice to play the game
   if (analysis.amount !== undefined && analysis.choice) {
+    await ctx.reply(`function called`);
     const result = await rockPaperScissors(analysis.amount, analysis.choice);
 
     // Inform the user of the result

@@ -7,7 +7,7 @@ export async function rps(
     agent: SolanaAgentKit,
     amount: number,
     choice: "rock" | "paper" | "scissors",
-): Promise<string> {
+) {
     try {
         const connection = new Connection(clusterApiUrl("devnet"));
         const KEYPAIR = agent.wallet;
@@ -41,7 +41,8 @@ export async function rps(
                 return msg;
             }
             let title = data.links?.next?.action?.title;
-            return title;
+            let image = data.links?.next?.action?.icon;
+            return [image, title];
         } else {
             return "failed";
         }

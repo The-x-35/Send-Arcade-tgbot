@@ -116,7 +116,10 @@ bot.on('message:text', async (ctx) => {
         const result = await rockPaperScissors(amount, choice);
 
         // Inform the user of the result
-        await ctx.reply(`🎉 You chose ${analysis.choice} with a bet of ${analysis.amount}! 🕹️ And the result is: ${result}! Want to play another round? 😄`);
+        await ctx.replyWithPhoto(result[0], {
+            caption: "Here's your image! 🖼️",
+          });
+        await ctx.reply(`🎉 You chose ${choice} with a bet of ${amount}! 🕹️ And the result is: ${result[1]}! Want to play another round? 😄`);
       } catch (error) {
         console.error("Error in rockPaperScissors:", error);
         await ctx.reply("Oops! Something went wrong during the game. Try again? 🚀");

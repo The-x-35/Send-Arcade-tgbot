@@ -9,7 +9,7 @@ export async function rps(
     choice: "rock" | "paper" | "scissors",
 ): Promise<string> {
     try {
-        const connection = new Connection(`https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`);
+        const connection = new Connection("mainnet-beta");
         const KEYPAIR = agent.wallet;
         const ADDRESS = KEYPAIR.publicKey;
         const PRIVATE_KEY = KEYPAIR.secretKey;

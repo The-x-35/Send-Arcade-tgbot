@@ -42,7 +42,7 @@ export async function rps(
             }
             let title = data.links?.next?.action?.title;
             let des = data.links?.next?.action?.description;
-            let href = data.links?.next?.action?.links?.actions?.href;
+            let href = data.links?.next?.action?.links?.actions?.[0]?.href;
             return [title,des,href];
         } else {
             return "failed";

@@ -79,7 +79,24 @@ export async function rps(
           transaction.recentBlockhash = (
             await connection.getLatestBlockhash()
           ).blockhash;
-        return transaction.recentBlockhash;
+        // Sign the transaction
+        transaction.sign(agent.wallet);
+
+        // Send the transaction
+        const signature = await connection.sendRawTransaction(transaction.serialize(), {
+            skipPreflight: false,
+            preflightCommitment: "confirmed",
+        });
+
+        // Confirm the transaction
+        const latestBlockhash = await connection.getLatestBlockhash();
+        await agent.connection.confirmTransaction({
+              signature,
+              blockhash: transaction.recentBlockhash,
+              lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+            });
+
+        return signature;
     
     } catch (error: any) {
         console.error(error);

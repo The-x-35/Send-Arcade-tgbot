@@ -28,7 +28,8 @@ export async function rps(
 
         const data = await res.json();
         console.log(data);
-        const title = data.links?.next?.action?.title;
+        const title = data.message;
+        
         return title
         // if (data.transaction) {
         //     console.log(data.message);

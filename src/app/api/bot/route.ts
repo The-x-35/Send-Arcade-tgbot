@@ -9,7 +9,7 @@ import OpenAI from 'openai';
 // Initialize Solana agent
 const agent = new SolanaAgentKit(
   process.env.WALLET || 'your-wallet',
-  'https://api.mainnet-beta.solana.com',
+  'https://api.devnet.solana.com',
   process.env.OPENAI_API_KEY || 'key'
 );
 

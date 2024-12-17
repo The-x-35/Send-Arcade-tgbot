@@ -9,7 +9,7 @@ export async function rps(
     choice: "rock" | "paper" | "scissors",
 ): Promise<string> {
     try {
-        const connection = new Connection(clusterApiUrl("mainnet-beta"));
+        const connection = new Connection(clusterApiUrl("devnet"));
         const KEYPAIR = agent.wallet;
         const ADDRESS = KEYPAIR.publicKey;
         const PRIVATE_KEY = KEYPAIR.secretKey;
@@ -48,7 +48,7 @@ export async function rps(
 }
 async function outcome(agent: SolanaAgentKit,href: string):Promise<string> {
     try {
-        const connection = new Connection(`https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`);
+        const connection = new Connection(clusterApiUrl("devnet"));
         const KEYPAIR = agent.wallet;
         const ADDRESS = KEYPAIR.publicKey;
         const PRIVATE_KEY = KEYPAIR.secretKey;

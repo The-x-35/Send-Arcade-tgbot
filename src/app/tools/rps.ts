@@ -28,16 +28,19 @@ export async function rps(
 
         const data = await res.json();
         console.log(data);
-        const title = data.message;
-        return title;
+        const msg = data.message;
         if (data.transaction) {
             console.log(data.message);
             const txn = Transaction.from(Buffer.from(data.transaction, "base64"));
 
             // Sign and send transaction
             txn.sign(KEYPAIR);
-            await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
+            sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
             // return outcome(agent,href);
+            if (msg.startsWith("Sorry")) {
+                return msg;
+            }
+            let title = data.links?.next?.action?.title;
             return title;
         } else {
             return "failed";

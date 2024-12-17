@@ -14,7 +14,7 @@ export async function rps(
         const ADDRESS = KEYPAIR.publicKey;
         const PRIVATE_KEY = KEYPAIR.secretKey;
         const res = await fetch(
-            `https://rps.sendarcade.fun/api/actions/bot?amount=${amount}&choice=${choice}`,
+            `https://rps-solana-blinks.vercel.app/api/actions/backend?amount=${amount}&choice=${choice}&player=${"B"}`,
             {
                 method: "POST",
                 headers: {
@@ -28,7 +28,7 @@ export async function rps(
 
         const data = await res.json();
         console.log(data);
-        const href = data.links?.next?.href;
+        const title = data.links?.next?.action?.title;
         
         if (data.transaction) {
             console.log(data.message);
@@ -38,7 +38,7 @@ export async function rps(
             txn.sign(KEYPAIR);
             sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
             // return outcome(agent,href);
-            return href;
+            return title;
         } else {
             return "failed";
         }

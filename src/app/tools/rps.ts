@@ -66,7 +66,7 @@ async function outcome(agent: SolanaAgentKit,href: string):Promise<string> {
         );
 
         const data = await res.json();
-        return data;
+        return data.title;
     } catch (error: any) {
         console.error(error);
         throw new Error(`RPS outcome failed: ${error.message}`);

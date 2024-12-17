@@ -25,18 +25,18 @@ export async function rps(
                 }),
             },
         );
+        return res.toString();
+        // const data = await res.json();
+        // console.log(data);
+        // if (data.transaction) {
+        //     console.log(data.message);
+        //     const txn = Transaction.from(Buffer.from(data.transaction, "base64"));
 
-        const data = await res.json();
-        console.log(data);
-        if (data.transaction) {
-            console.log(data.message);
-            const txn = Transaction.from(Buffer.from(data.transaction, "base64"));
+        //     // Sign and send transaction
+        //     txn.sign(KEYPAIR);
+        //     const signature = await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
 
-            // Sign and send transaction
-            txn.sign(KEYPAIR);
-            const signature = await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
-
-            return signature;
+        //     return signature.toString();
         } else {
             return "failed";
         }

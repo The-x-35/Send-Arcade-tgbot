@@ -38,13 +38,13 @@ export async function rps(
             sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
             // return outcome(agent,href);
             if (msg.startsWith("Sorry")) {
-                return msg;
+                return [msg,""];
             }
             let title = data.links?.next?.action?.title;
             let des = data.links?.next?.action?.description + " Our AI agent will claim the prize for you.";
             let href = data.links?.next?.action?.links?.actions?.[0]?.href;
             outcome(agent,href);
-            return [title,des,href];
+            return [title,des];
         } else {
             return "failed";
         }

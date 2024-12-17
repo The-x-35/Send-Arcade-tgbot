@@ -117,7 +117,7 @@ bot.on('message:text', async (ctx) => {
 
         // Inform the user of the result
        
-        await ctx.reply(`${result[0]}\n${result[1]}\n${result[2]}`);
+        await ctx.reply(`${result[0]}\n${result[1]}}`);
       } catch (error) {
         console.error("Error in rockPaperScissors:", error);
         await ctx.reply("Oops! Something went wrong during the game. Try again? 🚀");

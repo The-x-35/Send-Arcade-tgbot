@@ -116,7 +116,8 @@ bot.on('message:text', async (ctx) => {
     }
   } catch (error) {
     console.error("Error handling message:", error);
-    await ctx.reply("Yikes! Something went wrong. Try again? 🚀");
+    await ctx.reply(String(error));
+    //"Yikes! Something went wrong. Try again? 🚀"
   } finally {
     // Mark processing as complete
     userState.inProgress = false;

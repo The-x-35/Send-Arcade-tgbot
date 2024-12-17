@@ -82,7 +82,7 @@ bot.on('message:text', async (ctx) => {
     await ctx.reply("Hold on! I'm still processing your last move. 🎮");
     return;
   }
-  userState.chatHistory = [];
+
   // Get the user message and add it to the chat history
   const userMessage = ctx.message.text;
   userState.chatHistory.push(`User: ${userMessage}`);
@@ -93,8 +93,7 @@ bot.on('message:text', async (ctx) => {
 
     // Add OpenAI's response to the chat history
     userState.chatHistory.push(`Send Arcade AI Agent: ${analysis.response}`);
-    analysis.amount = undefined;
-    analysis.choice = undefined;
+
     // Send the response to the user
     await ctx.reply(analysis.response);
 

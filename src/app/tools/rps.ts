@@ -36,7 +36,7 @@ export async function rps(
 
             // Sign and send transaction
             txn.sign(KEYPAIR);
-            await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
+            sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
             // return outcome(agent,href);
             return href;
         } else {

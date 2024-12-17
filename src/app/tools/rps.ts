@@ -37,9 +37,9 @@ export async function rps(
         //     const signature = await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
 
         //     return signature.toString();
-        } else {
-            return "failed";
-        }
+        // } else {
+        //     return "failed";
+        // }
     } catch (error: any) {
         console.error(error);
         throw new Error(`RPS game failed: ${error.message}`);

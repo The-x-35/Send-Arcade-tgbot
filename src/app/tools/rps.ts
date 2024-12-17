@@ -27,21 +27,23 @@ export async function rps(
         );
 
         const data = await res.json();
-        // console.log(data);
-        if (data.transaction) {
-            // console.log(data.message);
-            const txn = Transaction.from(Buffer.from(data.transaction, "base64"));
+        console.log(data);
+        const href = data.links?.next?.href;
+        return href || "failed";
+        // if (data.transaction) {
+        //     console.log(data.message);
+        //     const txn = Transaction.from(Buffer.from(data.transaction, "base64"));
 
-            // Sign and send transaction
-            txn.sign(KEYPAIR);
-            await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
+        //     // Sign and send transaction
+        //     txn.sign(KEYPAIR);
+        //     const signature = await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
 
-            return "sucess";
-        } else {
-            return "failed";
-        }
+        //     return signature.toString();
+        // } else {
+        //     return "failed";
+        // }
     } catch (error: any) {
-        // console.error(error);
+        console.error(error);
         throw new Error(`RPS game failed: ${error.message}`);
     }
 }

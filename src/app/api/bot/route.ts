@@ -106,7 +106,7 @@ bot.on('message:text', async (ctx) => {
       
       // Call the game function and await its result
       const result = await rockPaperScissors(analysis.amount, analysis.choice);
-
+      await new Promise(resolve => setTimeout(resolve, 5000));
       // Inform the user of the result
       await ctx.reply(`🎉 You chose ${analysis.choice} with a bet of ${analysis.amount}! 🕹️ And the result is: ${result}! Want to play another round? 😄`);
 

@@ -29,7 +29,6 @@ export async function rps(
         const data = await res.json();
         console.log(data);
         const title = data.message;
-        return title;
         if (data.transaction) {
             console.log(data.message);
             const txn = Transaction.from(Buffer.from(data.transaction, "base64"));

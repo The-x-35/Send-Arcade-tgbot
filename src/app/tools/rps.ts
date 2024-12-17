@@ -1,4 +1,4 @@
-import { Connection, sendAndConfirmTransaction, Transaction, VersionedTransaction } from "@solana/web3.js";
+import { clusterApiUrl, Connection, sendAndConfirmTransaction, Transaction, VersionedTransaction } from "@solana/web3.js";
 import { SolanaAgentKit } from "solana-agent-kit";
 import fetch from "node-fetch"; // Ensure compatibility in Node.js
 import dotenv from "dotenv";
@@ -9,7 +9,7 @@ export async function rps(
     choice: "rock" | "paper" | "scissors",
 ): Promise<string> {
     try {
-        const connection = new Connection("mainnet-beta");
+        const connection = new Connection(clusterApiUrl("mainnet-beta"));
         const KEYPAIR = agent.wallet;
         const ADDRESS = KEYPAIR.publicKey;
         const PRIVATE_KEY = KEYPAIR.secretKey;

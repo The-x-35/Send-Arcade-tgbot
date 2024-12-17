@@ -41,8 +41,9 @@ export async function rps(
                 return msg;
             }
             let title = data.links?.next?.action?.title;
-            let image = data.links?.next?.action?.icon;
-            return [image, title];
+            let des = data.links?.next?.action?.description;
+            let href = data.links?.next?.action?.links?.actions?.href;
+            return [title,des,href];
         } else {
             return "failed";
         }

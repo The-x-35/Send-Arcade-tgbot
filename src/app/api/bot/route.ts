@@ -25,6 +25,7 @@ if (!token) throw new Error('TELEGRAM_BOT_TOKEN environment variable not found.'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || 'key' });
 
+// Telegram bot setup
 const bot = new Bot(token);
 
 // User state tracking ongoing conversations
@@ -98,27 +99,34 @@ bot.on('message:text', async (ctx) => {
 
     // Check if both the amount and choice were extracted
     if (analysis.amount !== undefined && analysis.choice) {
-      // Confirm function call
-      await ctx.reply(`Let's play! Bet: ${analysis.amount} SOL, Choice: ${analysis.choice}. 🎲`);
       // Mark processing as in progress
       userState.inProgress = true;
-      // Call the game function and await its result
-      const result = await rockPaperScissors(analysis.amount, analysis.choice);
 
-      // Inform the user of the result
-      await ctx.reply(`🎉 You chose ${analysis.choice} with a bet of ${analysis.amount}! 🕹️ And the result is: ${result}! Want to play another round? 😄`);
-        // Mark processing as complete
+      // Confirm function call
+      await ctx.reply(`Let's play! Bet: ${analysis.amount} SOL, Choice: ${analysis.choice}. 🎲`);
+
+      try {
+        // Call the game function and await its result
+        const result = await rockPaperScissors(analysis.amount, analysis.choice);
+
+        // Inform the user of the result
+        await ctx.reply(`🎉 You chose ${analysis.choice} with a bet of ${analysis.amount}! 🕹️ And the result is: ${result}! Want to play another round? 😄`);
+      } catch (error) {
+        console.error("Error in rockPaperScissors:", error);
+        await ctx.reply("Oops! Something went wrong during the game. Try again? 🚀");
+      } finally {
+        // Reset state
         userState.inProgress = false;
-        analysis.amount = undefined;
-        analysis.choice = undefined;
-      // Clear chat history for a fresh start
-      userState.chatHistory = [];
+        userState.chatHistory = [];
+      }
     }
   } catch (error) {
     console.error("Error handling message:", error);
     await ctx.reply(String(error));
-    //"Yikes! Something went wrong. Try again? 🚀"
-  } 
+    //"Yikes! Something went wrong. Try again? 🚀""Yikes! Something went wrong. Try again? 🚀"
+    userState.inProgress = false; // Reset in case of error
+  }
 });
 
+// Export webhook handler
 export const POST = webhookCallback(bot, 'std/http');

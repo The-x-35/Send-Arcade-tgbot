@@ -82,9 +82,6 @@ bot.on('message:text', async (ctx) => {
     return;
   }
 
-  // Mark processing as in progress
-  userState.inProgress = true;
-
   // Get the user message and add it to the chat history
   const userMessage = ctx.message.text;
   userState.chatHistory.push(`User: ${userMessage}`);
@@ -103,12 +100,15 @@ bot.on('message:text', async (ctx) => {
     if (analysis.amount !== undefined && analysis.choice) {
       // Confirm function call
       await ctx.reply(`Let's play! Bet: ${analysis.amount} SOL, Choice: ${analysis.choice}. 🎲`);
-      
+      // Mark processing as in progress
+      userState.inProgress = true;
       // Call the game function and await its result
       const result = await rockPaperScissors(analysis.amount, analysis.choice);
 
       // Inform the user of the result
       await ctx.reply(`🎉 You chose ${analysis.choice} with a bet of ${analysis.amount}! 🕹️ And the result is: ${result}! Want to play another round? 😄`);
+        // Mark processing as complete
+        userState.inProgress = false;
         analysis.amount = undefined;
         analysis.choice = undefined;
       // Clear chat history for a fresh start
@@ -118,10 +118,7 @@ bot.on('message:text', async (ctx) => {
     console.error("Error handling message:", error);
     await ctx.reply(String(error));
     //"Yikes! Something went wrong. Try again? 🚀"
-  } finally {
-    // Mark processing as complete
-    userState.inProgress = false;
-  }
+  } 
 });
 
 export const POST = webhookCallback(bot, 'std/http');

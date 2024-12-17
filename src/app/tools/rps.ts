@@ -34,9 +34,9 @@ export async function rps(
 
             // Sign and send transaction
             txn.sign(KEYPAIR);
-            const signature = await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
+            await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
 
-            return signature.toString();
+            return "sucess";
         } else {
             return "failed";
         }

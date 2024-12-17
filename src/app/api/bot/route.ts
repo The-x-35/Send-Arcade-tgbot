@@ -109,7 +109,8 @@ bot.on('message:text', async (ctx) => {
 
       // Inform the user of the result
       await ctx.reply(`🎉 You chose ${analysis.choice} with a bet of ${analysis.amount}! 🕹️ And the result is: ${result}! Want to play another round? 😄`);
-
+        analysis.amount = undefined;
+        analysis.choice = undefined;
       // Clear chat history for a fresh start
       userState.chatHistory = [];
     }

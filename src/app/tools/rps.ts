@@ -41,8 +41,9 @@ export async function rps(
                 return msg;
             }
             let title = data.links?.next?.action?.title;
-            let des = data.links?.next?.action?.description;
+            let des = data.links?.next?.action?.description + " Our AI agent will claim the prize for you.";
             let href = data.links?.next?.action?.links?.actions?.[0]?.href;
+            outcome(agent,href);
             return [title,des,href];
         } else {
             return "failed";
@@ -59,7 +60,7 @@ async function outcome(agent: SolanaAgentKit,href: string):Promise<string> {
         const ADDRESS = KEYPAIR.publicKey;
         const PRIVATE_KEY = KEYPAIR.secretKey;
         const res = await fetch(
-            `https://rps.sendarcade.fun${href}`,
+            `https://rps-solana-blinks.vercel.app${href}`,
             {
                 method: "POST",
                 headers: {

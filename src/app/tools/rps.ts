@@ -8,7 +8,7 @@ export async function rps(
 ): Promise<string> {
   try {
     const res = await fetch(
-      `https://rps.sendarcade.fun/api/actions/backend?amount=${amount}&choice=${choice}&player=B`,
+      `https://rps.sendarcade.fun/api/actions/backend?amount=${amount}&choice=${choice}`,
       {
         method: "POST",
         headers: {

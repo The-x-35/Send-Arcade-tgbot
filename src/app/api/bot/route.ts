@@ -1,5 +1,4 @@
 export const dynamic = 'force-dynamic';
-
 export const fetchCache = 'force-no-store';
 
 import { Bot, webhookCallback } from 'grammy';
@@ -7,16 +6,16 @@ import { SolanaAgentKit, createSolanaTools } from 'solana-agent-kit';
 import { rps } from '../../tools/rps';
 import OpenAI from 'openai';
 
-// Initialize with private key and optional RPC URL
+// Initialize Solana agent
 const agent = new SolanaAgentKit(
   process.env.WALLET || 'your-wallet',
   'https://api.mainnet-beta.solana.com',
   process.env.OPENAI_API_KEY || 'key'
 );
 
-// Create LangChain tools
 const tools = createSolanaTools(agent);
 
+// Rock-Paper-Scissors function
 async function rockPaperScissors(amount: number, choice: "rock" | "paper" | "scissors") {
   return rps(agent, amount, choice);
 }
@@ -28,23 +27,22 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || 'key' });
 
 const bot = new Bot(token);
 
-// User state to track ongoing conversations
-const userStates: Record<string, { chatHistory: string[] }> = {};
+// User state tracking ongoing conversations
+const userStates: Record<string, { chatHistory: string[]; inProgress: boolean }> = {};
 
-// OpenAI message analysis
+// Analyze chat history with OpenAI
 async function analyzeChatWithOpenAI(chatHistory: string[]): Promise<{ response: string; amount?: number; choice?: "rock" | "paper" | "scissors" }> {
   const prompt = `
-You are "Send Arcade AI Agent", the quirky and fun assistant for SendArcade.fun! Your mission:
-- Engage users in playful, witty conversations about gaming.
+You are "Send Arcade AI Agent", a quirky and fun assistant for SendArcade.fun! Your mission:
+- Engage users with playful, witty conversations about gaming.
 - If they express interest in playing Rock-Paper-Scissors (or any game), subtly nudge them to start by asking for the betting amount and choice.
-- Extract the "amount" (a floating point number in sol) they want to bet and their "choice" ("Rock", "Paper", or "Scissors").
-- Make sure your responses are fun, quirky, and exciting to keep the user interested in playing.
-- You are not going to play the game, but you will help the user get started.
+- Extract the "amount" (a floating-point number in SOL) they want to bet and their "choice" ("rock", "paper", or "scissors").
+- Make your replies fun, exciting, and game-like to keep the user engaged.
 
-Return the response as a JSON object with:
-- "response": string (what Send Arcade AI Agent should reply to the user)
-- "amount": number (optional, the bet amount if extracted)
-- "choice": string (optional, "rock", "paper", or "scissors" for the respective choices if extracted)
+Return a JSON object with:
+- "response": string (your reply to the user)
+- "amount": number (optional, extracted bet amount)
+- "choice": string (optional, extracted choice: "rock", "paper", or "scissors").
 
 Chat history:
 ${chatHistory.join('\n')}
@@ -53,7 +51,7 @@ ${chatHistory.join('\n')}
     model: 'gpt-3.5-turbo',
     messages: [{ role: 'system', content: prompt }],
     max_tokens: 300,
-    temperature: 0.8, // Higher temperature for quirkier replies
+    temperature: 0.8, // Quirky and fun responses
   });
 
   try {
@@ -73,34 +71,54 @@ bot.on('message:text', async (ctx) => {
 
   // Initialize user state if not already present
   if (!userStates[userId]) {
-    userStates[userId] = { chatHistory: [] };
+    userStates[userId] = { chatHistory: [], inProgress: false };
   }
 
   const userState = userStates[userId];
-  const userMessage = ctx.message.text;
 
-  // Add the user's message to chat history
+  // Prevent overlapping requests
+  if (userState.inProgress) {
+    await ctx.reply("Hold on! I'm still processing your last move. 🎮");
+    return;
+  }
+
+  // Mark processing as in progress
+  userState.inProgress = true;
+
+  // Get the user message and add it to the chat history
+  const userMessage = ctx.message.text;
   userState.chatHistory.push(`User: ${userMessage}`);
 
-  // Analyze the chat history using OpenAI
-  const analysis = await analyzeChatWithOpenAI(userState.chatHistory);
+  try {
+    // Analyze the chat history
+    const analysis = await analyzeChatWithOpenAI(userState.chatHistory);
 
-  // Add OpenAI's response to the chat history
-  userState.chatHistory.push(`Send Arcade AI Agent: ${analysis.response}`);
+    // Add OpenAI's response to the chat history
+    userState.chatHistory.push(`Send Arcade AI Agent: ${analysis.response}`);
 
-  // Send OpenAI's response back to the user
-  await ctx.reply(analysis.response);
+    // Send the response to the user
+    await ctx.reply(analysis.response);
 
-  // Check if we have both the amount and choice to play the game
-  if (analysis.amount !== undefined && analysis.choice) {
-    await ctx.reply(`function called`);
-    const result = await rockPaperScissors(analysis.amount, analysis.choice);
+    // Check if both the amount and choice were extracted
+    if (analysis.amount !== undefined && analysis.choice) {
+      // Confirm function call
+      await ctx.reply(`Let's play! Bet: ${analysis.amount} SOL, Choice: ${analysis.choice}. 🎲`);
+      
+      // Call the game function and await its result
+      const result = await rockPaperScissors(analysis.amount, analysis.choice);
 
-    // Inform the user of the result
-    await ctx.reply(`🎉 You chose ${analysis.choice} with a bet of ${analysis.amount}! 🕹️ And the result is: ${result}! Want to play another round? 😄`);
+      // Inform the user of the result
+      await ctx.reply(`🎉 You chose ${analysis.choice} with a bet of ${analysis.amount}! 🕹️ And the result is: ${result}! Want to play another round? 😄`);
 
-    // Clear the state for the user
-    delete userStates[userId];
+      // Clear chat history for a fresh start
+      userState.chatHistory = [];
+    }
+  } catch (error) {
+    console.error("Error handling message:", error);
+    await ctx.reply("Yikes! Something went wrong. Try again? 🚀");
+  } finally {
+    // Mark processing as complete
+    userState.inProgress = false;
   }
 });
 

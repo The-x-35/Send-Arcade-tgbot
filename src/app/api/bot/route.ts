@@ -82,7 +82,7 @@ bot.on('message:text', async (ctx) => {
     await ctx.reply("Hold on! I'm still processing your last move. 🎮");
     return;
   }
-
+  userState.chatHistory = [];
   // Get the user message and add it to the chat history
   const userMessage = ctx.message.text;
   userState.chatHistory.push(`User: ${userMessage}`);
@@ -93,7 +93,8 @@ bot.on('message:text', async (ctx) => {
 
     // Add OpenAI's response to the chat history
     userState.chatHistory.push(`Send Arcade AI Agent: ${analysis.response}`);
-
+    analysis.amount = undefined;
+    analysis.choice = undefined;
     // Send the response to the user
     await ctx.reply(analysis.response);
 
@@ -111,6 +112,7 @@ bot.on('message:text', async (ctx) => {
         let choice = analysis.choice;
         analysis.amount = undefined;
         analysis.choice = undefined;
+        userState.chatHistory = [];
         const result = await rockPaperScissors(amount, choice);
 
         // Inform the user of the result
@@ -121,7 +123,6 @@ bot.on('message:text', async (ctx) => {
       } finally {
         // Reset state
         userState.inProgress = false;
-        userState.chatHistory = [];
       }
     }
   } catch (error) {

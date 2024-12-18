@@ -75,7 +75,7 @@ async function getOrCreateUserKeyPair(userId: string) {
 }
 
 // Analyze chat history with OpenAI
-async function analyzeChatWithOpenAI(chatHistory: string[]): Promise<{ response: string; amount?: number; choice?: "rock" | "paper" | "scissors" }> {
+async function analyzeChatWithOpenAI(chatHistory: string[]): Promise<{ response: string; amount?: number; choice?: "rock" | "paper" | "scissors"; pubkey?: string }> {
   const prompt = `
 You are "Send Arcade AI Agent", a quirky and fun assistant for SendArcade.fun! Your mission:
 - Engage users with playful, witty conversations about gaming.
@@ -86,12 +86,13 @@ You are "Send Arcade AI Agent", a quirky and fun assistant for SendArcade.fun! Y
 - If you have already returned amount and choice, do not return it again and again unless user asks to play again.
 - Return a simple starting message in response if you cant find anything, return something in response.
 - You should not play against the user, just return the values.
-- If the user asks to claim his amount back, tell him he can do that by sending "/claim <PubKey>"
+- If the user asks to claim his amount back, get his public key and tell him that his request is being processed and return the pubkey."
 
 Return a JSON object with:
 - "response": string (your reply to the user)
 - "amount": number (optional, extracted bet amount)
 - "choice": string (optional, extracted choice: "rock", "paper", or "scissors").
+- "pubkey": string (optional, extracted public key for claimback)
 
 Chat history:
 ${chatHistory.join('\n')}
@@ -123,48 +124,21 @@ bot.on('message:text', async (ctx) => {
   if (!userDocSnap.exists()) {
     // Get or create user key pair
     const keyPair = await getOrCreateUserKeyPair(userId);
-    await ctx.reply(`Looks like you are using the bot first time. You can fund your bot and start playing. Your unique Solana wallet is: \n${String(keyPair.publicKey)}`);
+    await ctx.reply(`Looks like you are using the Game agent first time. You can fund your agent and start playing. Your unique Solana wallet is: \n${String(keyPair.publicKey)}`);
   }
   // Get or create user key pair
   const keyPair = await getOrCreateUserKeyPair(userId);
+  if (keyPair.inProgress) {
+    await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
+    return;
+  }
   const agent = new SolanaAgentKit(
     keyPair.privateKey || 'your-wallet',
     'https://api.devnet.solana.com',
     process.env.OPENAI_API_KEY || 'key'
   );
   const connection = new Connection(clusterApiUrl("devnet"));
-  if (ctx.message.text.startsWith('/claim')) {
-    const parts = ctx.message.text.split(' ');
-    if (parts.length === 2) {
-      const pubkey = parts[1];
-      if (pubkey) {
-        const userBalance = (await connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
-        if (userBalance < 0.000001) {
-          await ctx.reply(`You do not have enough amount in your wallet to claimback. Your balance: ${userBalance} SOL.`);
-          return;
-        }
-        await ctx.reply('Claiming your prize. Please wait... 🎁');
-        let res = "";
-        try {
-          res = await claimback(agent, pubkey);
-        } catch (error) {
-          console.error("Error in claimback:", error);
-          await ctx.reply(String(error));
-          return;
-        }
 
-        // await new Promise(resolve => setTimeout(resolve, 5000));
-        await ctx.reply(`${res}`);
-        return;
-      }
-      else {
-        await ctx.reply('Invalid claim command. Use /claim <PubKey>.');
-        return;
-      }
-    }
-    await ctx.reply('Invalid claim command. Use /claim <PubKey>.');
-    return;
-  }
   // Inform the user about their public key
   if (keyPair.inProgress) {
     await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
@@ -198,11 +172,28 @@ bot.on('message:text', async (ctx) => {
 
     // Send the response to the user
     await ctx.reply(analysis.response);
-
+    if (analysis.pubkey) {
+      let pubkey = analysis.pubkey;
+      analysis.pubkey = undefined;
+      const userBalance = (await connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
+      if (userBalance < 0.000001) {
+        await ctx.reply(`You do not have enough amount in your wallet to claimback. Your balance: ${userBalance} SOL.`);
+        return;
+      }
+      await ctx.reply('Claiming your prize. Please wait... 🎁');
+      let res = "";
+      try {
+        await updateDoc(userDocRef, { inProgress: true });
+        res = await claimback(agent, pubkey);
+      } catch (error) {
+        console.error("Error in claimback:", error);
+        await ctx.reply(String(error));
+        return;
+      }
+    }
     // Check if both the amount and choice were extracted
     if (analysis.amount !== undefined && analysis.choice) {
       userState.inProgress = true;
-
 
       try {
         // Call the game function and await its result

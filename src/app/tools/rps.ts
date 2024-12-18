@@ -100,7 +100,7 @@ export async function rps(
             let des = data.links?.next?.action?.description + " Our AI agent will claim the prize for you.";
             let href = data.links?.next?.action?.links?.actions?.[0]?.href;
             let res = await outcome(agent, href);
-            return [title, des, href];
+            return [title, des, res];
         } else {
             return "failed";
         }

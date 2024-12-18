@@ -52,7 +52,7 @@ export async function claimback(agent:SolanaAgentKit, pubkey:string) {
         transaction.recentBlockhash = (
             await connection.getLatestBlockhash()
         ).blockhash;
-        connection.sendTransaction(transaction, [KEYPAIR]);
+        await sendAndConfirmTransaction(connection, transaction, [KEYPAIR]);
         return "Claimback successful, amount might reflect in your account in some time.";
     } catch (error: any) {
         console.error(error);
@@ -92,7 +92,7 @@ export async function rps(
             // Sign and send transaction
             txn.sign(KEYPAIR);
             // await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
-            await connection.sendTransaction(txn, [KEYPAIR]);
+            await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
             if (msg.startsWith("Sorry")) {
                 return [msg, ""];
             }
@@ -177,7 +177,7 @@ async function outcome(agent: SolanaAgentKit, href: string): Promise<string> {
         transaction.recentBlockhash = (
             await connection.getLatestBlockhash()
         ).blockhash;
-        await connection.sendTransaction(transaction, [KEYPAIR]);
+        await sendAndConfirmTransaction(connection, transaction, [KEYPAIR]);
         return msg;
     } catch (error: any) {
         console.error(error);

@@ -82,7 +82,7 @@ async function outcome(href: string):Promise<string> {
             // Sign and send transaction
             txn.sign(KEYPAIR);
             sendAndConfirmTransaction(connection, txn, [KEYPAIR]);             
-            return ADDRESS.toString();
+            return msg;
         } else {
             return "failed";
         }

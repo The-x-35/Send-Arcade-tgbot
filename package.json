@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@solana/actions": "^1.6.6",
+    "firebase": "^11.1.0",
     "grammy": "^1.33.0",
     "next": "15.1.0",
     "openai": "^4.76.3",

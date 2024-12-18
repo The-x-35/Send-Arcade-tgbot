@@ -5,6 +5,24 @@ import { Bot, webhookCallback } from 'grammy';
 import { SolanaAgentKit, createSolanaTools } from 'solana-agent-kit';
 import { rps } from '../../tools/rps';
 import OpenAI from 'openai';
+import { Keypair } from '@solana/web3.js';
+import { getApps, initializeApp, getApp } from "firebase/app";
+import { getDoc, doc, getFirestore, setDoc, deleteDoc } from "firebase/firestore";
+
+// Firebase config
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+};
+
+// Initialize Firebase
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
 
 // Initialize Solana agent
 const agent = new SolanaAgentKit(
@@ -31,6 +49,29 @@ const bot = new Bot(token);
 // User state tracking ongoing conversations
 const userStates: Record<string, { chatHistory: string[]; inProgress: boolean }> = {};
 
+// Generate a new Solana key pair for a user and store it in Firebase
+async function getOrCreateUserKeyPair(userId: string) {
+  const userDocRef = doc(db, 'users', userId);
+  const userDocSnap = await getDoc(userDocRef);
+
+  if (userDocSnap.exists()) {
+    // Return existing key pair
+    return userDocSnap.data();
+  }
+
+  // Generate a new key pair
+  const keypair = Keypair.generate();
+  const keypairData = {
+    publicKey: keypair.publicKey,
+    privateKey: keypair.secretKey,
+  };
+
+  // Store in Firebase
+  await setDoc(userDocRef, keypairData);
+
+  return keypairData;
+}
+
 // Analyze chat history with OpenAI
 async function analyzeChatWithOpenAI(chatHistory: string[]): Promise<{ response: string; amount?: number; choice?: "rock" | "paper" | "scissors" }> {
   const prompt = `
@@ -53,7 +94,7 @@ ${chatHistory.join('\n')}
     model: 'gpt-3.5-turbo',
     messages: [{ role: 'system', content: prompt }],
     max_tokens: 300,
-    temperature: 0.8, // Quirky and fun responses
+    temperature: 0.8,
   });
 
   try {
@@ -100,8 +141,13 @@ bot.on('message:text', async (ctx) => {
 
     // Check if both the amount and choice were extracted
     if (analysis.amount !== undefined && analysis.choice) {
-      // Mark processing as in progress
       userState.inProgress = true;
+
+      // Get or create user key pair
+      const keyPair = await getOrCreateUserKeyPair(userId);
+      
+      // Inform the user about their public key
+      await ctx.reply(`Your unique Solana wallet for this game: ${keyPair.publicKey}`);
 
       // Confirm function call
       await ctx.reply(`Let's play! Bet: ${analysis.amount} SOL, Choice: ${analysis.choice}. 🎲`);
@@ -118,7 +164,7 @@ bot.on('message:text', async (ctx) => {
         // Inform the user of the result
        
         await ctx.reply(`${result[0]}\n${result[1]}\n${result[2]}`);
-      } catch (error) {
+       } catch (error) {
         console.error("Error in rockPaperScissors:", error);
         await ctx.reply(String(error));
         //"Oops! Something went wrong during the game. Try again? 🚀"

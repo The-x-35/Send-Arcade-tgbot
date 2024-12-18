@@ -124,7 +124,7 @@ async function outcome(agent: SolanaAgentKit, href: string): Promise<string> {
             await connection.getLatestBlockhash()
         ).blockhash;
         await sendAndConfirmTransaction(connection, transaction, [KEYPAIR]);
-
+return msg;
     } catch (error: any) {
         console.error(error);
         throw new Error(`RPS outcome failed: ${error.message}`);

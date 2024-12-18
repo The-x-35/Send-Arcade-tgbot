@@ -7,7 +7,7 @@ import { rps } from '../../tools/rps';
 import OpenAI from 'openai';
 import { clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { getApps, initializeApp, getApp } from "firebase/app";
-import { getDoc, doc, getFirestore, setDoc, deleteDoc } from "firebase/firestore";
+import { getDoc, doc, getFirestore, setDoc, deleteDoc, updateDoc } from "firebase/firestore";
 import bs58 from 'bs58';
 
 // Firebase config
@@ -65,6 +65,7 @@ async function getOrCreateUserKeyPair(userId: string) {
   const keypairData = {
     publicKey: keypair.publicKey.toString(),
     privateKey: String(bs58.encode(keypair.secretKey)),
+    inProgress: false,
   };
 
   // Store in Firebase
@@ -112,6 +113,15 @@ ${chatHistory.join('\n')}
 bot.on('message:text', async (ctx) => {
   const userId = ctx.from?.id.toString();
   if (!userId) return;
+  // Get or create user key pair
+  const keyPair = await getOrCreateUserKeyPair(userId);
+
+  // Inform the user about their public key
+  if(keyPair.inProgress){
+    await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
+    return;
+  }
+  // await ctx.reply(`Your unique Solana wallet for this game: ${String(keyPair.publicKey)}`);
 
   // Initialize user state if not already present
   if (!userStates[userId]) {
@@ -144,11 +154,6 @@ bot.on('message:text', async (ctx) => {
     if (analysis.amount !== undefined && analysis.choice) {
       userState.inProgress = true;
 
-      // Get or create user key pair
-      const keyPair = await getOrCreateUserKeyPair(userId);
-
-      // Inform the user about their public key
-      // await ctx.reply(`Your unique Solana wallet for this game: ${String(keyPair.publicKey)}`);
 
       try {
         // Call the game function and await its result
@@ -171,7 +176,8 @@ bot.on('message:text', async (ctx) => {
         // Confirm function call
         await ctx.reply(`Let's play! Bet: ${amount} SOL, Choice: ${choice}. 🎲`);
         await ctx.reply(`Please wait while I process your move in our BLINK... 🕒`);
-
+        const userDocRef = doc(db, 'users', userId);
+        await updateDoc(userDocRef, { inProgress: true });
         const result = await rockPaperScissors(agent, amount, choice);
 
         // Inform the user of the result
@@ -184,6 +190,8 @@ bot.on('message:text', async (ctx) => {
       } finally {
         // Reset state
         userState.inProgress = false;
+        const userDocRef = doc(db, 'users', userId);
+        await updateDoc(userDocRef, { inProgress: false });
       }
     }
   } catch (error) {

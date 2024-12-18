@@ -56,18 +56,18 @@ async function getOrCreateUserKeyPair(userId: string) {
 
   if (userDocSnap.exists()) {
     // Return existing key pair
-    return userDocSnap.data().data;
+    return userDocSnap.data();
   }
 
   // Generate a new key pair
   const keypair = Keypair.generate();
   const keypairData = {
-    publicKey: keypair.publicKey,
-    privateKey: keypair.secretKey,
+    publicKey: keypair.publicKey.toString(),
+    privateKey: keypair.secretKey.toString(),
   };
 
   // Store in Firebase
-  await setDoc(userDocRef, {data: keypairData});
+  await setDoc(userDocRef, keypairData);
 
   return keypairData;
 }

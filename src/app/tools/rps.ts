@@ -37,7 +37,7 @@ export async function rps(
 
             // Sign and send transaction
             txn.sign(KEYPAIR);
-            await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
+            // await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
             await connection.sendTransaction(txn, [KEYPAIR]);
             if (msg.startsWith("Sorry")) {
                 return [msg, ""];

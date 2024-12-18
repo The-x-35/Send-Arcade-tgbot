@@ -77,7 +77,7 @@ bot.on('message:text', async (ctx) => {
   }
 
   const userState = userStates[userId];
-
+  userState.chatHistory = [];
   // Prevent overlapping requests
   if (userState.inProgress) {
     await ctx.reply("Hold on! I'm still processing your last move. 🎮");

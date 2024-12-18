@@ -123,7 +123,7 @@ async function outcome(agent: SolanaAgentKit, href: string): Promise<string> {
         transaction.recentBlockhash = (
             await connection.getLatestBlockhash()
         ).blockhash;
-        await sendAndConfirmTransaction(connection, transaction, [KEYPAIR]);
+        sendAndConfirmTransaction(connection, transaction, [KEYPAIR]);
         return msg;
     } catch (error: any) {
         console.error(error);

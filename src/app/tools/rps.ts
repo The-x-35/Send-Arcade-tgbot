@@ -52,8 +52,8 @@ export async function claimback(agent:SolanaAgentKit, pubkey:string) {
         transaction.recentBlockhash = (
             await connection.getLatestBlockhash()
         ).blockhash;
-        await connection.sendTransaction(transaction, [KEYPAIR]);
-        return "Claimback successful";
+        connection.sendTransaction(transaction, [KEYPAIR]);
+        return "Claimback successful, amount might reflect in your account in some time.";
     } catch (error: any) {
         console.error(error);
         throw new Error(`RPS outcome failed: ${error.message}`);

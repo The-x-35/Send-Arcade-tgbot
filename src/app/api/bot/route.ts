@@ -120,7 +120,8 @@ bot.on('message:text', async (ctx) => {
         await ctx.reply(`${result[0]}\n${result[1]}\n${result[2]}`);
       } catch (error) {
         console.error("Error in rockPaperScissors:", error);
-        await ctx.reply("Oops! Something went wrong during the game. Try again? 🚀");
+        await ctx.reply(String(error));
+        //"Oops! Something went wrong during the game. Try again? 🚀"
       } finally {
         // Reset state
         userState.inProgress = false;

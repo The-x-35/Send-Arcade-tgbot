@@ -125,7 +125,7 @@ bot.on('message:text', async (ctx) => {
   if (!userDocSnap.exists()) {
     // Get or create user key pair
     const keyPair = await getOrCreateUserKeyPair(userId);
-    await ctx.reply(`Looks like you are using the Game agent first time. You can fund your agent and start playing. Your unique Solana wallet is: \n${String(keyPair.publicKey)}`);
+    await ctx.reply(`Looks like you are using the Game agent first time. You can fund your agent and start playing. Your unique Solana wallet is: \n\`${String(keyPair.publicKey)}\`[link](${String(keyPair.publicKey)})`);
   }
   // Get or create user key pair
   const keyPair = await getOrCreateUserKeyPair(userId);
@@ -206,7 +206,7 @@ bot.on('message:text', async (ctx) => {
         const connection = new Connection(clusterApiUrl("mainnet-beta"));
         const userBalance = (await connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
         if (userBalance < amount) {
-          await ctx.reply(`OOPS! Looks like you don't have enough SOL in your wallet to play this game. Your balance: ${userBalance} SOL.\n Please top up your wallet by sending the sol to this address ${String(keyPair.publicKey)}.`);
+          await ctx.reply(`OOPS! Looks like you don't have enough SOL in your wallet to play this game. Your balance: ${userBalance} SOL.\n Please top up your wallet by sending the sol to this address \`${String(keyPair.publicKey)}\`[link](${String(keyPair.publicKey)}).`);
           return;
         }
         // Confirm function call

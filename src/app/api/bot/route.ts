@@ -133,8 +133,16 @@ bot.on('message:text', async (ctx) => {
           return;
         }
         await ctx.reply('Claiming your prize. Please wait... 🎁');
-        let res = await claimback(agent, pubkey);
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        let res = "";
+        try {
+          res = await claimback(agent, pubkey);
+        } catch (error) {
+          console.error("Error in claimback:", error);
+          await ctx.reply(String(error));
+          return;
+        }
+        
+        // await new Promise(resolve => setTimeout(resolve, 5000));
         await ctx.reply(`${res}`);
         return;
       }

@@ -8,6 +8,7 @@ import OpenAI from 'openai';
 import { Keypair } from '@solana/web3.js';
 import { getApps, initializeApp, getApp } from "firebase/app";
 import { getDoc, doc, getFirestore, setDoc, deleteDoc } from "firebase/firestore";
+import bs58 from 'bs58';
 
 // Firebase config
 const firebaseConfig = {
@@ -63,7 +64,7 @@ async function getOrCreateUserKeyPair(userId: string) {
   const keypair = Keypair.generate();
   const keypairData = {
     publicKey: keypair.publicKey.toString(),
-    privateKey: keypair.secretKey.toString(),
+    privateKey: String(bs58.encode(keypair.secretKey)),
   };
 
   // Store in Firebase

@@ -5,7 +5,7 @@ import { Bot, webhookCallback } from 'grammy';
 import { SolanaAgentKit, createSolanaTools } from 'solana-agent-kit';
 import { rps } from '../../tools/rps';
 import OpenAI from 'openai';
-import { Keypair } from '@solana/web3.js';
+import { clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { getApps, initializeApp, getApp } from "firebase/app";
 import { getDoc, doc, getFirestore, setDoc, deleteDoc } from "firebase/firestore";
 import bs58 from 'bs58';
@@ -165,6 +165,12 @@ bot.on('message:text', async (ctx) => {
           'https://api.devnet.solana.com',
           process.env.OPENAI_API_KEY || 'key'
         );
+        const connection = new Connection(clusterApiUrl("devnet"));
+        const userBalance = (await connection.getBalance(agent.wallet.publicKey))/LAMPORTS_PER_SOL;
+        if (userBalance < amount ) {
+          await ctx.reply(`You don't have enough SOL in your wallet to play this game. Your balance: ${userBalance} SOL.`);
+          return;
+        }
         const result = await rockPaperScissors(agent,amount, choice);
 
         // Inform the user of the result

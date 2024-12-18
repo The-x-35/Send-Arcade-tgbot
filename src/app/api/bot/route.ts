@@ -21,8 +21,8 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
+const app = !getApps.length ? initializeApp(firebaseConfig) : getApp();
+const db = getFirestore(app);
 
 // Initialize Solana agent
 const agent = new SolanaAgentKit(

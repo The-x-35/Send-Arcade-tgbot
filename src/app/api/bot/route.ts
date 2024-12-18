@@ -117,6 +117,14 @@ ${chatHistory.join('\n')}
 bot.on('message:text', async (ctx) => {
   const userId = ctx.from?.id.toString();
   if (!userId) return;
+  const userDocRef = doc(db, 'users', userId);
+  const userDocSnap = await getDoc(userDocRef);
+
+  if (!userDocSnap.exists()) {
+    // Get or create user key pair
+    const keyPair = await getOrCreateUserKeyPair(userId);
+    await ctx.reply(`Looks like you are using the bot first time. You can fund your bot and start playing. Your unique Solana wallet is: \n${String(keyPair.publicKey)}`);
+  }
   // Get or create user key pair
   const keyPair = await getOrCreateUserKeyPair(userId);
   const agent = new SolanaAgentKit(
@@ -144,13 +152,12 @@ bot.on('message:text', async (ctx) => {
           await ctx.reply(String(error));
           return;
         }
-        
+
         // await new Promise(resolve => setTimeout(resolve, 5000));
         await ctx.reply(`${res}`);
         return;
       }
-      else 
-      {
+      else {
         await ctx.reply('Invalid claim command. Use /claim <PubKey>.');
         return;
       }
@@ -159,7 +166,7 @@ bot.on('message:text', async (ctx) => {
     return;
   }
   // Inform the user about their public key
-  if(keyPair.inProgress){
+  if (keyPair.inProgress) {
     await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
     return;
   }

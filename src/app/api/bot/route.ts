@@ -26,16 +26,16 @@ const app = !getApps.length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
 // Initialize Solana agent
-const agent = new SolanaAgentKit(
-  process.env.WALLET || 'your-wallet',
-  'https://api.devnet.solana.com',
-  process.env.OPENAI_API_KEY || 'key'
-);
+// const agent = new SolanaAgentKit(
+//   process.env.WALLET || 'your-wallet',
+//   'https://api.devnet.solana.com',
+//   process.env.OPENAI_API_KEY || 'key'
+// );
 
-const tools = createSolanaTools(agent);
+// const tools = createSolanaTools(agent);
 
 // Rock-Paper-Scissors function
-async function rockPaperScissors(amount: number, choice: "rock" | "paper" | "scissors") {
+async function rockPaperScissors(agent: SolanaAgentKit, amount: number, choice: "rock" | "paper" | "scissors") {
   return rps(agent, amount, choice);
 }
 
@@ -146,7 +146,7 @@ bot.on('message:text', async (ctx) => {
 
       // Get or create user key pair
       const keyPair = await getOrCreateUserKeyPair(userId);
-      
+
       // Inform the user about their public key
       await ctx.reply(`Your unique Solana wallet for this game: ${String(keyPair.publicKey)}`);
 
@@ -160,12 +160,17 @@ bot.on('message:text', async (ctx) => {
         analysis.amount = undefined;
         analysis.choice = undefined;
         userState.chatHistory = [];
-        const result = await rockPaperScissors(amount, choice);
+        const agent = new SolanaAgentKit(
+          keyPair.privateKey || 'your-wallet',
+          'https://api.devnet.solana.com',
+          process.env.OPENAI_API_KEY || 'key'
+        );
+        const result = await rockPaperScissors(agent,amount, choice);
 
         // Inform the user of the result
-       
+
         await ctx.reply(`${result[0]}\n${result[1]}\n${result[2]}`);
-       } catch (error) {
+      } catch (error) {
         console.error("Error in rockPaperScissors:", error);
         await ctx.reply(String(error));
         //"Oops! Something went wrong during the game. Try again? 🚀"

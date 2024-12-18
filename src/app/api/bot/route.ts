@@ -148,10 +148,7 @@ bot.on('message:text', async (ctx) => {
       const keyPair = await getOrCreateUserKeyPair(userId);
 
       // Inform the user about their public key
-      await ctx.reply(`Your unique Solana wallet for this game: ${String(keyPair.publicKey)}`);
-
-      // Confirm function call
-      await ctx.reply(`Let's play! Bet: ${analysis.amount} SOL, Choice: ${analysis.choice}. 🎲`);
+      // await ctx.reply(`Your unique Solana wallet for this game: ${String(keyPair.publicKey)}`);
 
       try {
         // Call the game function and await its result
@@ -166,12 +163,16 @@ bot.on('message:text', async (ctx) => {
           process.env.OPENAI_API_KEY || 'key'
         );
         const connection = new Connection(clusterApiUrl("devnet"));
-        const userBalance = (await connection.getBalance(agent.wallet.publicKey))/LAMPORTS_PER_SOL;
-        if (userBalance < amount ) {
-          await ctx.reply(`You don't have enough SOL in your wallet to play this game. Your balance: ${userBalance} SOL.`);
+        const userBalance = (await connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
+        if (userBalance < amount) {
+          await ctx.reply(`OOPS! Looks like you don't have enough SOL in your wallet to play this game. Your balance: ${userBalance} SOL.\n Please top up your wallet by sending the sol to this address ${String(keyPair.publicKey)}.`);
           return;
         }
-        const result = await rockPaperScissors(agent,amount, choice);
+        // Confirm function call
+        await ctx.reply(`Let's play! Bet: ${amount} SOL, Choice: ${choice}. 🎲`);
+        await ctx.reply(`Please wait while I process your move in our BLINK... 🕒`);
+
+        const result = await rockPaperScissors(agent, amount, choice);
 
         // Inform the user of the result
 

@@ -86,6 +86,7 @@ You are "Send Arcade AI Agent," a fun and witty assistant for SendArcade.fun. He
 - Do not return a public key unless the user explicitly requests to claim their amount back. When a public key is needed, acknowledge the user's request and confirm that their claim is being processed.
 - Keep responses simple, playful, and in the context of games. If no specific instructions are given by the user, respond with a fun or quirky comment to keep the interaction engaging.
 - You only have access to rock paper scissors BLINK and claimback feature.
+- You are not going yo play or tell result of the game, just return the amount and choice if the user wants to play.
 
 When responding, format your output as a JSON object with the following keys:
 - "response": string (your reply to the user)
@@ -134,10 +135,10 @@ bot.on('message:text', async (ctx) => {
   }
   const agent = new SolanaAgentKit(
     keyPair.privateKey || 'your-wallet',
-    'https://api.devnet.solana.com',
+    'https://api.mainnet-beta.solana.com',
     process.env.OPENAI_API_KEY || 'key'
   );
-  const connection = new Connection(clusterApiUrl("devnet"));
+  const connection = new Connection(clusterApiUrl("mainnet-beta"));
 
   // Inform the user about their public key
   if (keyPair.inProgress) {
@@ -202,7 +203,7 @@ bot.on('message:text', async (ctx) => {
         analysis.amount = undefined;
         analysis.choice = undefined;
         userState.chatHistory = [];
-        const connection = new Connection(clusterApiUrl("devnet"));
+        const connection = new Connection(clusterApiUrl("mainnet-beta"));
         const userBalance = (await connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
         if (userBalance < amount) {
           await ctx.reply(`OOPS! Looks like you don't have enough SOL in your wallet to play this game. Your balance: ${userBalance} SOL.\n Please top up your wallet by sending the sol to this address ${String(keyPair.publicKey)}.`);
@@ -210,7 +211,7 @@ bot.on('message:text', async (ctx) => {
         }
         // Confirm function call
         await ctx.reply(`Let's play! Bet: ${amount} SOL, Choice: ${choice}. 🎲`);
-        await ctx.reply(`Please wait while I process your move in our BLINK... 🕒`);
+        await ctx.reply(`Please wait while I process your move in Rock Paper Scissors BLINK... 🕒`);
         const userDocRef = doc(db, 'users', userId);
         await updateDoc(userDocRef, { inProgress: true });
         const result = await rockPaperScissors(agent, amount, choice);

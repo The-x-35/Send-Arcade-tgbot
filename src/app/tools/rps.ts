@@ -7,7 +7,7 @@ import { MEMO_PROGRAM_ID } from "@solana/actions";
 dotenv.config();
 export async function claimback(agent:SolanaAgentKit, pubkey:string) {
     try {
-        const connection = new Connection(clusterApiUrl("devnet"));
+        const connection = new Connection(clusterApiUrl("mainnet-beta"));
         const KEYPAIR = Keypair.fromSecretKey(bs58.decode(process.env.SOLANA_SENDER_SECRET!));;
         const ADDRESS = KEYPAIR.publicKey;
         const PRIVATE_KEY = KEYPAIR.secretKey;
@@ -65,7 +65,7 @@ export async function rps(
     choice: "rock" | "paper" | "scissors",
 ) {
     try {
-        const connection = new Connection(clusterApiUrl("devnet"));
+        const connection = new Connection(clusterApiUrl("mainnet-beta"));
         const KEYPAIR = agent.wallet;
         const ADDRESS = KEYPAIR.publicKey;
         const PRIVATE_KEY = KEYPAIR.secretKey;
@@ -97,7 +97,7 @@ export async function rps(
                 return [msg, ""];
             }
             let title = data.links?.next?.action?.title;
-            let des = data.links?.next?.action?.description + " Our AI agent will claim the prize for you.";
+            let des = " Our AI agent will claim the prize for you.";
             let href = data.links?.next?.action?.links?.actions?.[0]?.href;
             let res = await outcome(agent, href);
             return [title, des, res];
@@ -111,7 +111,7 @@ export async function rps(
 }
 async function outcome(agent: SolanaAgentKit, href: string): Promise<string> {
     try {
-        const connection = new Connection(clusterApiUrl("devnet"));
+        const connection = new Connection(clusterApiUrl("mainnet-beta"));
         const KEYPAIR = Keypair.fromSecretKey(bs58.decode(process.env.SOLANA_SENDER_SECRET!));;
         const ADDRESS = KEYPAIR.publicKey;
         const PRIVATE_KEY = KEYPAIR.secretKey;

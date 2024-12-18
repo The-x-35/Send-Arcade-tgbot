@@ -132,8 +132,8 @@ bot.on('message:text', async (ctx) => {
           await ctx.reply(`You do not have enough amount in your wallet to claimback. Your balance: ${userBalance} SOL.`);
           return;
         }
-        let res = await claimback(agent, pubkey);
         await ctx.reply('Claiming your prize. Please wait... 🎁');
+        let res = await claimback(agent, pubkey);
         await new Promise(resolve => setTimeout(resolve, 5000));
         await ctx.reply(`${res}`);
         return;

@@ -15,7 +15,7 @@ export async function claimback(agent:SolanaAgentKit, pubkey:string) {
         const balance = await connection.getBalance(ADDRESS); // Get sender's balance
         const estimatedFee = 0.000008 * LAMPORTS_PER_SOL; // Example fee estimation
       
-        const amount = balance - estimatedFee; // Calculate transferable amount
+        const amount = parseFloat((balance - estimatedFee).toFixed(4)); // Calculate transferable amount
       
         const transaction = new Transaction();
         transaction.add(

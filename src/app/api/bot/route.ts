@@ -56,7 +56,7 @@ async function getOrCreateUserKeyPair(userId: string) {
 
   if (userDocSnap.exists()) {
     // Return existing key pair
-    return userDocSnap.data();
+    return userDocSnap.data().data;
   }
 
   // Generate a new key pair
@@ -67,7 +67,7 @@ async function getOrCreateUserKeyPair(userId: string) {
   };
 
   // Store in Firebase
-  await setDoc(userDocRef, keypairData);
+  await setDoc(userDocRef, {data: keypairData});
 
   return keypairData;
 }
@@ -147,7 +147,7 @@ bot.on('message:text', async (ctx) => {
       const keyPair = await getOrCreateUserKeyPair(userId);
       
       // Inform the user about their public key
-      await ctx.reply(`Your unique Solana wallet for this game: ${keyPair.publicKey}`);
+      await ctx.reply(`Your unique Solana wallet for this game: ${String(keyPair.publicKey)}`);
 
       // Confirm function call
       await ctx.reply(`Let's play! Bet: ${analysis.amount} SOL, Choice: ${analysis.choice}. 🎲`);

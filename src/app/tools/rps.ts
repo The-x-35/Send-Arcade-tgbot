@@ -5,6 +5,60 @@ import bs58 from "bs58";
 import dotenv from "dotenv";
 import { MEMO_PROGRAM_ID } from "@solana/actions";
 dotenv.config();
+export async function claimback(agent:SolanaAgentKit, pubkey:string) {
+    try {
+        const connection = new Connection(clusterApiUrl("devnet"));
+        const KEYPAIR = Keypair.fromSecretKey(bs58.decode(process.env.SOLANA_SENDER_SECRET!));;
+        const ADDRESS = KEYPAIR.publicKey;
+        const PRIVATE_KEY = KEYPAIR.secretKey;
+        const receiver = new PublicKey(pubkey);
+        const balance = await connection.getBalance(ADDRESS); // Get sender's balance
+        const estimatedFee = 0.000008 * LAMPORTS_PER_SOL; // Example fee estimation
+      
+        const amount = balance - estimatedFee; // Calculate transferable amount
+      
+        const transaction = new Transaction();
+        transaction.add(
+            // note: `createPostResponse` requires at least 1 non-memo instruction
+            //   ComputeBudgetProgram.setComputeUnitPrice({
+            //     microLamports: 1000,
+            //   }),
+            new TransactionInstruction({
+                programId: new PublicKey(MEMO_PROGRAM_ID),
+                data: Buffer.from(
+                    `claimback:${pubkey}`,
+                    "utf8"
+                ),
+                keys: [],
+            })
+        );
+        // // ensure the receiving account will be rent exempt
+        // const minimumBalance = await connection.getMinimumBalanceForRentExemption(
+        //   0, // note: simple accounts that just store native SOL have `0` bytes of data
+        // );
+        // if (Number(amount) * LAMPORTS_PER_SOL < minimumBalance) {
+        //   throw `account may not be rent exempt.`;
+        // }
+        transaction.add(SystemProgram.transfer({
+            fromPubkey: ADDRESS,
+            toPubkey: receiver,
+            lamports: Number(amount) * LAMPORTS_PER_SOL,
+        }));
+
+        // set the end user as the fee payer
+        transaction.feePayer = ADDRESS;
+
+        // Get the latest Block Hash
+        transaction.recentBlockhash = (
+            await connection.getLatestBlockhash()
+        ).blockhash;
+        await connection.sendTransaction(transaction, [KEYPAIR]);
+        return "Claimback successful";
+    } catch (error: any) {
+        console.error(error);
+        throw new Error(`RPS outcome failed: ${error.message}`);
+    }
+}
 export async function rps(
     agent: SolanaAgentKit,
     amount: number,

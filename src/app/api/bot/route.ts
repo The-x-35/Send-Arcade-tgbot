@@ -3,7 +3,7 @@ export const fetchCache = 'force-no-store';
 
 import { Bot, webhookCallback } from 'grammy';
 import { SolanaAgentKit, createSolanaTools } from 'solana-agent-kit';
-import { rps } from '../../tools/rps';
+import { rps, claimback } from '../../tools/rps';
 import OpenAI from 'openai';
 import { clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { getApps, initializeApp, getApp } from "firebase/app";
@@ -79,6 +79,7 @@ async function analyzeChatWithOpenAI(chatHistory: string[]): Promise<{ response:
   const prompt = `
 You are "Send Arcade AI Agent", a quirky and fun assistant for SendArcade.fun! Your mission:
 - Engage users with playful, witty conversations about gaming.
+- You only have excess to Rock-Paper-Scissors game BLINK and nothing else.
 - If they express interest in playing Rock-Paper-Scissors (or any game), subtly nudge them to start by asking for the betting amount and choice.
 - Extract the "amount" (a floating-point number in SOL) they want to bet and their "choice" ("rock", "paper", or "scissors").
 - Make your replies fun, exciting, and game-like to keep the user engaged.
@@ -115,7 +116,37 @@ bot.on('message:text', async (ctx) => {
   if (!userId) return;
   // Get or create user key pair
   const keyPair = await getOrCreateUserKeyPair(userId);
-
+  const agent = new SolanaAgentKit(
+    keyPair.privateKey || 'your-wallet',
+    'https://api.devnet.solana.com',
+    process.env.OPENAI_API_KEY || 'key'
+  );
+  const connection = new Connection(clusterApiUrl("devnet"));
+  if (ctx.message.text.startsWith('/claim')) {
+    const parts = ctx.message.text.split(' ');
+    if (parts.length === 2) {
+      const pubkey = parts[1];
+      if (pubkey) {
+        const userBalance = (await connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
+        if (userBalance < 0.000001) {
+          await ctx.reply(`You do not have enough amount in your wallet to claimback. Your balance: ${userBalance} SOL.`);
+          return;
+        }
+        let res = await claimback(agent, pubkey);
+        await ctx.reply('Claiming your prize. Please wait... 🎁');
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        await ctx.reply(`${res}`);
+        return;
+      }
+      else 
+      {
+        await ctx.reply('Invalid claim command. Use /claim <PubKey>.');
+        return;
+      }
+    }
+    await ctx.reply('Invalid claim command. Use /claim <PubKey>.');
+    return;
+  }
   // Inform the user about their public key
   if(keyPair.inProgress){
     await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
@@ -162,11 +193,6 @@ bot.on('message:text', async (ctx) => {
         analysis.amount = undefined;
         analysis.choice = undefined;
         userState.chatHistory = [];
-        const agent = new SolanaAgentKit(
-          keyPair.privateKey || 'your-wallet',
-          'https://api.devnet.solana.com',
-          process.env.OPENAI_API_KEY || 'key'
-        );
         const connection = new Connection(clusterApiUrl("devnet"));
         const userBalance = (await connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
         if (userBalance < amount) {

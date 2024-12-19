@@ -118,10 +118,9 @@ ${chatHistory.join('\n')}
 // Telegram bot handler
 bot.on('message:text', async (ctx) => {
   await ctx.reply(ctx.message.text);
-  // let res = await rockPaperScissors(agent, 0.0001, "R");
-  // await new Promise(resolve => setTimeout(resolve, 5000));
-  // await ctx.reply(res[0]); 
-  // await ctx.reply(res[1]);
+  let res = await rockPaperScissors(agent, 0.0001, "R");
+  await ctx.reply(res[0]); 
+  await ctx.reply(res[1]);
   // const userId = ctx.from?.id.toString();
   // if (!userId) return;
   // const userDocRef = doc(db, 'users', userId);

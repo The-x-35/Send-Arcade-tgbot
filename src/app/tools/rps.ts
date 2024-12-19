@@ -96,7 +96,7 @@ export async function rps(
             txn.recentBlockhash = (
                 await connection.getLatestBlockhash()
             ).blockhash;
-            await sendAndConfirmTransaction(
+            sendAndConfirmTransaction(
                 connection,
                 txn,
                 [KEYPAIR],
@@ -187,7 +187,7 @@ async function outcome(agent: SolanaAgentKit, href: string): Promise<string> {
         transaction.recentBlockhash = (
             await connection.getLatestBlockhash()
         ).blockhash;
-        await sendAndConfirmTransaction(
+        sendAndConfirmTransaction(
             connection,
             transaction,
             [KEYPAIR],

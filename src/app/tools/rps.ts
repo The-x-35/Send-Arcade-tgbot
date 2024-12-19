@@ -104,13 +104,13 @@ export async function rps(
             );
             // return [sig];
             if (msg.startsWith("Sorry")) {
-                return [msg,""];
+                return [msg,"",""];
             }
             let title = data.links?.next?.action?.title;
             let des = " Our AI agent will claim the prize for you.";
             let href = data.links?.next?.action?.links?.actions?.[0]?.href;
             let res = await outcome(agent, href);
-            return [title,res];
+            return [title,des,res];
         } else {
             return "failed";
         }

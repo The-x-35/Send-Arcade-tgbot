@@ -85,12 +85,12 @@ export async function rps(
         const data = await res.json();
         console.log(data);
         const msg = data.transaction;
-        return [String(msg)];
+        // return [String(msg)];
         // return [msg];
         if (data.transaction) {
             console.log(data.message);
             const txn = Transaction.from(Buffer.from(data.transaction, "base64"));
-
+            return[txn];
             // Sign and send transaction
             txn.sign(KEYPAIR);
             // await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);

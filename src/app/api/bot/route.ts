@@ -228,7 +228,7 @@ bot.on('message:text', async (ctx) => {
           return;
         }
         // Confirm function call
-        await ctx.reply(`Let's play! Bet: ${amount} SOL, Choice: ${choice}. 🎲`);
+        await ctx.reply(`Let's play! Bet: ${amount} SOL. 🎲`);
         const userDocRef = doc(db, 'users', userId);
         await updateDoc(userDocRef, { inProgress: true });
         const result = await rockPaperScissors(agent, amount, choice);

@@ -244,16 +244,16 @@ bot.on('message:text', async (ctx) => {
 });
 
 // Export webhook handler
-// export const POST = webhookCallback(bot, 'std/http');
+export const POST = webhookCallback(bot, 'std/http');
 // Wrap the webhookCallback to add the HTTP header
-export const POST = async (req: Request) => {
-  const handler = webhookCallback(bot, 'std/http');
+// export const POST = async (req: Request) => {
+//   const handler = webhookCallback(bot, 'std/http');
 
-  // Process the request and get the response
-  const response = await handler(req);
+//   // Process the request and get the response
+//   const response = await handler(req);
 
-  // Add the custom header
-  response.headers.set('HTTP/1.1', '200 OK');
+//   // Add the custom header
+//   response.headers.set('HTTP/1.1', '200 OK');
 
-  return response;
-};
+//   return response;
+// };

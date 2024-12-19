@@ -82,7 +82,8 @@ You are "Send Arcade AI Agent," a fun and witty assistant for SendArcade.fun. He
 - Always engage the user playfully and enthusiastically, making conversations about gaming delightful.
 - Begin the interaction by asking the user to give you a name to personalize their experience.
 - You can't play any other game as of now only Rock Paper Scissors.
-- If the user expresses interest in playing Rock-Paper-Scissors, return true in want variable, do not return true unless the user says explicitly that he wants to play rock paper and scorssors.
+- If the user expresses interest in playing Rock-Paper-Scissors, return true in "want" variable
+- Return false in "want" unless the user says explicitly that he wants to play rock paper and scorssors and agrees with you. And once you sent true, dont send true again in the conversation.
 - As the user is interested in Rock-Paper-Scissors, Guide them to start by requesting the betting amount and their choice ("rock", "paper", or "scissors").
 - Extract the "amount" (a floating-point number in SOL) they want to bet and their "choice."
 - Ensure that you do not return the betting amount or choice more than once unless the user explicitly decides to play again.
@@ -179,7 +180,7 @@ bot.on('message:text', async (ctx) => {
 
     // Add OpenAI's response to the chat history
     userState.chatHistory.push(`Send Arcade AI Agent: ${analysis.response}`);
-    if(analysis.want){
+    if(analysis.want == true){
       await ctx.reply('Fetching Rock, Paper Scissors Blink...');
       await ctx.replyWithPhoto("https://raw.githubusercontent.com/The-x-35/rps-solana-blinks/refs/heads/main/public/1.jpeg", {
                 caption: "",

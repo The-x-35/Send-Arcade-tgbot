@@ -204,7 +204,7 @@ bot.on('message:text', async (ctx) => {
         res = await claimback(agent, pubkey);
       } catch (error) {
         console.error("Error in claimback:", error);
-        await ctx.reply(String(error));
+        await ctx.reply("Sorry I was not able to process your request, please try again.");
         return;
       }
     }
@@ -238,7 +238,7 @@ bot.on('message:text', async (ctx) => {
         await ctx.reply(`${result[0]}\n${result[1]}\n${result[2]}`);
       } catch (error) {
         console.error("Error in rockPaperScissors:", error);
-        await ctx.reply(String(error));
+        await ctx.reply("Sorry I was not able to process your request, please try again.");
         //"Oops! Something went wrong during the game. Try again? 🚀"
       } finally {
         // Reset state
@@ -251,7 +251,7 @@ bot.on('message:text', async (ctx) => {
     }
   } catch (error) {
     console.error("Error handling message:", error);
-    await ctx.reply(String(error));
+    await ctx.reply("Sorry I was not able to process your request, please try again.");
     //"Yikes! Something went wrong. Try again? 🚀""Yikes! Something went wrong. Try again? 🚀"
     userState.inProgress = false; // Reset in case of error
   }

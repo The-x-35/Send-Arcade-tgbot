@@ -78,6 +78,7 @@ async function getOrCreateUserKeyPair(userId: string) {
 async function analyzeChatWithOpenAI(chatHistory: string[]): Promise<{ response: string;want?:boolean; amount?: number; choice?: "R" | "P" | "S"; pubkey?: string }> {
   const prompt = `
 You are "Send Arcade AI Agent," a fun and witty assistant for SendArcade.fun. Here are your guidelines:
+- If i send /start, it means u need to forget all previous chats, cosider this as the start of conversation.
 - Always engage the user playfully and enthusiastically, making conversations about gaming delightful.
 - Begin the interaction by asking the user to give you a name to personalize their experience.
 - You can't play any other game as of now only Rock Paper Scissors.
@@ -178,7 +179,12 @@ bot.on('message:text', async (ctx) => {
 
     // Add OpenAI's response to the chat history
     userState.chatHistory.push(`Send Arcade AI Agent: ${analysis.response}`);
-
+    if(analysis.want){
+      await ctx.reply('Fetching Rock, Paper Scissors Blink...');
+      await ctx.replyWithPhoto("https://raw.githubusercontent.com/The-x-35/rps-solana-blinks/refs/heads/main/public/1.jpeg", {
+                caption: "",
+            });
+    }
     // Send the response to the user
     await ctx.reply(analysis.response);
     if (analysis.pubkey) {
@@ -200,12 +206,7 @@ bot.on('message:text', async (ctx) => {
         return;
       }
     }
-    if(analysis.want){
-      await ctx.reply('Fetching Rock, Paper Scissors Blink...');
-      await ctx.replyWithPhoto("https://raw.githubusercontent.com/The-x-35/rps-solana-blinks/refs/heads/main/public/1.jpeg", {
-                caption: "",
-            });
-    }
+   
     // Check if both the amount and choice were extracted
     if (analysis.amount !== undefined && analysis.choice) {
       userState.inProgress = true;

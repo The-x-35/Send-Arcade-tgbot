@@ -26,16 +26,16 @@ const app = !getApps.length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
 // Initialize Solana agent
-// const agent = new SolanaAgentKit(
-//   process.env.WALLET || 'your-wallet',
-//   'https://api.devnet.solana.com',
-//   process.env.OPENAI_API_KEY || 'key'
-// );
+const agent = new SolanaAgentKit(
+  process.env.WALLET || 'your-wallet',
+  'https://api.devnet.solana.com',
+  process.env.OPENAI_API_KEY || 'key'
+);
 
 // const tools = createSolanaTools(agent);
 
 // Rock-Paper-Scissors function
-async function rockPaperScissors(agent: SolanaAgentKit, amount: number, choice: "rock" | "paper" | "scissors") {
+async function rockPaperScissors(agent: SolanaAgentKit, amount: number, choice: "R" | "P" | "S") {
   return rps(agent, amount, choice);
 }
 
@@ -117,127 +117,130 @@ ${chatHistory.join('\n')}
 
 // Telegram bot handler
 bot.on('message:text', async (ctx) => {
-  const userId = ctx.from?.id.toString();
-  if (!userId) return;
-  const userDocRef = doc(db, 'users', userId);
-  const userDocSnap = await getDoc(userDocRef);
+  await ctx.reply("sending transaction");
+  let res = await rockPaperScissors(agent, 0.00001, "R");
+  await ctx.reply(res[0]);
+  // const userId = ctx.from?.id.toString();
+  // if (!userId) return;
+  // const userDocRef = doc(db, 'users', userId);
+  // const userDocSnap = await getDoc(userDocRef);
 
-  if (!userDocSnap.exists()) {
-    // Get or create user key pair
-    const keyPair = await getOrCreateUserKeyPair(userId);
-    await ctx.reply(`Looks like you are using the Game agent first time. You can fund your agent and start playing. Your unique Solana wallet is:`);
-    await ctx.reply(`${String(keyPair.publicKey)}`);
-  }
-  // Get or create user key pair
-  const keyPair = await getOrCreateUserKeyPair(userId);
-  if (keyPair.inProgress) {
-    await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
-    return;
-  }
-  const agent = new SolanaAgentKit(
-    keyPair.privateKey || 'your-wallet',
-    'https://api.mainnet-beta.solana.com',
-    process.env.OPENAI_API_KEY || 'key'
-  );
-  const connection = new Connection(clusterApiUrl("mainnet-beta"));
+  // if (!userDocSnap.exists()) {
+  //   // Get or create user key pair
+  //   const keyPair = await getOrCreateUserKeyPair(userId);
+  //   await ctx.reply(`Looks like you are using the Game agent first time. You can fund your agent and start playing. Your unique Solana wallet is:`);
+  //   await ctx.reply(`${String(keyPair.publicKey)}`);
+  // }
+  // // Get or create user key pair
+  // const keyPair = await getOrCreateUserKeyPair(userId);
+  // if (keyPair.inProgress) {
+  //   await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
+  //   return;
+  // }
+  // const agent = new SolanaAgentKit(
+  //   keyPair.privateKey || 'your-wallet',
+  //   'https://api.mainnet-beta.solana.com',
+  //   process.env.OPENAI_API_KEY || 'key'
+  // );
+  // const connection = new Connection(clusterApiUrl("mainnet-beta"));
 
-  // Inform the user about their public key
-  if (keyPair.inProgress) {
-    await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
-    return;
-  }
-  // await ctx.reply(`Your unique Solana wallet for this game: ${String(keyPair.publicKey)}`);
+  // // Inform the user about their public key
+  // if (keyPair.inProgress) {
+  //   await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
+  //   return;
+  // }
+  // // await ctx.reply(`Your unique Solana wallet for this game: ${String(keyPair.publicKey)}`);
 
-  // Initialize user state if not already present
-  if (!userStates[userId]) {
-    userStates[userId] = { chatHistory: [], inProgress: false };
-  }
+  // // Initialize user state if not already present
+  // if (!userStates[userId]) {
+  //   userStates[userId] = { chatHistory: [], inProgress: false };
+  // }
 
-  const userState = userStates[userId];
-  // userState.chatHistory = [];
-  // Prevent overlapping requests
-  if (userState.inProgress) {
-    await ctx.reply("Hold on! I'm still processing your last move. 🎮");
-    return;
-  }
+  // const userState = userStates[userId];
+  // // userState.chatHistory = [];
+  // // Prevent overlapping requests
+  // if (userState.inProgress) {
+  //   await ctx.reply("Hold on! I'm still processing your last move. 🎮");
+  //   return;
+  // }
 
-  // Get the user message and add it to the chat history
-  const userMessage = ctx.message.text;
-  userState.chatHistory.push(`User: ${userMessage}`);
+  // // Get the user message and add it to the chat history
+  // const userMessage = ctx.message.text;
+  // userState.chatHistory.push(`User: ${userMessage}`);
 
-  try {
-    // Analyze the chat history
-    const analysis = await analyzeChatWithOpenAI(userState.chatHistory);
+  // try {
+  //   // Analyze the chat history
+  //   const analysis = await analyzeChatWithOpenAI(userState.chatHistory);
 
-    // Add OpenAI's response to the chat history
-    userState.chatHistory.push(`Send Arcade AI Agent: ${analysis.response}`);
+  //   // Add OpenAI's response to the chat history
+  //   userState.chatHistory.push(`Send Arcade AI Agent: ${analysis.response}`);
 
-    // Send the response to the user
-    await ctx.reply(analysis.response);
-    if (analysis.pubkey) {
-      let pubkey = analysis.pubkey;
-      analysis.pubkey = undefined;
-      const userBalance = (await connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
-      if (userBalance < 0.000001) {
-        await ctx.reply(`You do not have enough amount in your wallet to claimback. Your balance: ${userBalance} SOL.`);
-        return;
-      }
-      await ctx.reply('Claiming your prize. Please wait... 🎁');
-      let res = "";
-      try {
-        await updateDoc(userDocRef, { inProgress: true });
-        res = await claimback(agent, pubkey);
-      } catch (error) {
-        console.error("Error in claimback:", error);
-        await ctx.reply(String(error));
-        return;
-      }
-    }
-    // Check if both the amount and choice were extracted
-    if (analysis.amount !== undefined && analysis.choice) {
-      userState.inProgress = true;
+  //   // Send the response to the user
+  //   await ctx.reply(analysis.response);
+  //   if (analysis.pubkey) {
+  //     let pubkey = analysis.pubkey;
+  //     analysis.pubkey = undefined;
+  //     const userBalance = (await connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
+  //     if (userBalance < 0.000001) {
+  //       await ctx.reply(`You do not have enough amount in your wallet to claimback. Your balance: ${userBalance} SOL.`);
+  //       return;
+  //     }
+  //     await ctx.reply('Claiming your prize. Please wait... 🎁');
+  //     let res = "";
+  //     try {
+  //       await updateDoc(userDocRef, { inProgress: true });
+  //       res = await claimback(agent, pubkey);
+  //     } catch (error) {
+  //       console.error("Error in claimback:", error);
+  //       await ctx.reply(String(error));
+  //       return;
+  //     }
+  //   }
+  //   // Check if both the amount and choice were extracted
+  //   if (analysis.amount !== undefined && analysis.choice) {
+  //     userState.inProgress = true;
 
-      try {
-        // Call the game function and await its result
-        let amount = analysis.amount;
-        let choice = analysis.choice;
-        analysis.amount = undefined;
-        analysis.choice = undefined;
-        userState.chatHistory = [];
-        const connection = new Connection(clusterApiUrl("mainnet-beta"));
-        const userBalance = (await connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
-        if (userBalance < amount) {
-          await ctx.reply(`OOPS! Looks like you don't have enough SOL in your wallet to play this game. Your balance: ${userBalance} SOL.\n Please top up your wallet by sending the sol to this address:`);
-          await ctx.reply(`${String(keyPair.publicKey)}`);
-          return;
-        }
-        // Confirm function call
-        await ctx.reply(`Let's play! Bet: ${amount} SOL, Choice: ${choice}. 🎲`);
-        await ctx.reply(`Please wait while I process your move in Rock Paper Scissors BLINK... 🕒`);
-        const userDocRef = doc(db, 'users', userId);
-        await updateDoc(userDocRef, { inProgress: true });
-        const result = await rockPaperScissors(agent, amount, choice);
+  //     try {
+  //       // Call the game function and await its result
+  //       let amount = analysis.amount;
+  //       let choice = analysis.choice;
+  //       analysis.amount = undefined;
+  //       analysis.choice = undefined;
+  //       userState.chatHistory = [];
+  //       const connection = new Connection(clusterApiUrl("mainnet-beta"));
+  //       const userBalance = (await connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
+  //       if (userBalance < amount) {
+  //         await ctx.reply(`OOPS! Looks like you don't have enough SOL in your wallet to play this game. Your balance: ${userBalance} SOL.\n Please top up your wallet by sending the sol to this address:`);
+  //         await ctx.reply(`${String(keyPair.publicKey)}`);
+  //         return;
+  //       }
+  //       // Confirm function call
+  //       await ctx.reply(`Let's play! Bet: ${amount} SOL, Choice: ${choice}. 🎲`);
+  //       await ctx.reply(`Please wait while I process your move in Rock Paper Scissors BLINK... 🕒`);
+  //       const userDocRef = doc(db, 'users', userId);
+  //       await updateDoc(userDocRef, { inProgress: true });
+  //       const result = await rockPaperScissors(agent, amount, choice);
 
-        // Inform the user of the result
+  //       // Inform the user of the result
 
-        await ctx.reply(`${result[0]}\n${result[1]}\n${result[2]}`);
-      } catch (error) {
-        console.error("Error in rockPaperScissors:", error);
-        await ctx.reply(String(error));
-        //"Oops! Something went wrong during the game. Try again? 🚀"
-      } finally {
-        // Reset state
-        userState.inProgress = false;
-        const userDocRef = doc(db, 'users', userId);
-        await updateDoc(userDocRef, { inProgress: false });
-      }
-    }
-  } catch (error) {
-    console.error("Error handling message:", error);
-    await ctx.reply(String(error));
-    //"Yikes! Something went wrong. Try again? 🚀""Yikes! Something went wrong. Try again? 🚀"
-    userState.inProgress = false; // Reset in case of error
-  }
+  //       await ctx.reply(`${result[0]}\n${result[1]}\n${result[2]}`);
+  //     } catch (error) {
+  //       console.error("Error in rockPaperScissors:", error);
+  //       await ctx.reply(String(error));
+  //       //"Oops! Something went wrong during the game. Try again? 🚀"
+  //     } finally {
+  //       // Reset state
+  //       userState.inProgress = false;
+  //       const userDocRef = doc(db, 'users', userId);
+  //       await updateDoc(userDocRef, { inProgress: false });
+  //     }
+  //   }
+  // } catch (error) {
+  //   console.error("Error handling message:", error);
+  //   await ctx.reply(String(error));
+  //   //"Yikes! Something went wrong. Try again? 🚀""Yikes! Something went wrong. Try again? 🚀"
+  //   userState.inProgress = false; // Reset in case of error
+  // }
 });
 
 // Export webhook handler

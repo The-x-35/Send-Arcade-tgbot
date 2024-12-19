@@ -62,7 +62,7 @@ export async function claimback(agent:SolanaAgentKit, pubkey:string) {
 export async function rps(
     agent: SolanaAgentKit,
     amount: number,
-    choice: "rock" | "paper" | "scissors",
+    choice: "R" | "P" | "S",
 ) {
     try {
         const connection = new Connection(clusterApiUrl("mainnet-beta"));
@@ -95,7 +95,8 @@ export async function rps(
             txn.recentBlockhash = (
                 await connection.getLatestBlockhash()
             ).blockhash;
-            await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
+            let sig = await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
+            return [sig];
             if (msg.startsWith("Sorry")) {
                 return [msg, ""];
             }

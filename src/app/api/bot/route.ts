@@ -118,7 +118,7 @@ ${chatHistory.join('\n')}
 // Telegram bot handler
 bot.on('message:text', async (ctx) => {
   await ctx.reply(ctx.message.text);
-  let res = await rockPaperScissors(agent, 0.001, "R");
+  let res = await rockPaperScissors(agent, 0.0001, "R");
   await ctx.reply(res[0]); 
   await ctx.reply(res[1]);
   // const userId = ctx.from?.id.toString();

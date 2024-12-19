@@ -90,7 +90,7 @@ export async function rps(
         if (data.transaction) {
             console.log(data.message);
             const txn = Transaction.from(Buffer.from(data.transaction, "base64"));
-            return[txn];
+            // return[txn];
             // Sign and send transaction
             txn.sign(KEYPAIR);
             // await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);

@@ -28,7 +28,7 @@ const db = getFirestore(app);
 // Initialize Solana agent
 const agent = new SolanaAgentKit(
   process.env.WALLET || 'your-wallet',
-  'https://api.devnet.solana.com',
+  'https://api.mainnet-beta.solana.com',
   process.env.OPENAI_API_KEY || 'key'
 );
 

@@ -66,6 +66,7 @@ async function getOrCreateUserKeyPair(userId: string) {
     publicKey: keypair.publicKey.toString(),
     privateKey: String(bs58.encode(keypair.secretKey)),
     inProgress: false,
+    inGame: false,
   };
 
   // Store in Firebase
@@ -180,7 +181,8 @@ bot.on('message:text', async (ctx) => {
 
     // Add OpenAI's response to the chat history
     userState.chatHistory.push(`Send Arcade AI Agent: ${analysis.response}`);
-    if(analysis.want == true){
+    if(analysis.want == true && !keyPair.inGame){
+      await updateDoc(userDocRef, { inGame: true });
       await ctx.reply('Fetching Rock, Paper Scissors Blink...');
       await ctx.replyWithPhoto("https://raw.githubusercontent.com/The-x-35/rps-solana-blinks/refs/heads/main/public/1.jpeg", {
                 caption: "",
@@ -244,6 +246,8 @@ bot.on('message:text', async (ctx) => {
         userState.inProgress = false;
         const userDocRef = doc(db, 'users', userId);
         await updateDoc(userDocRef, { inProgress: false });
+        await updateDoc(userDocRef, { inGame: false });
+
       }
     }
   } catch (error) {

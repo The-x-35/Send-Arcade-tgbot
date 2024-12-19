@@ -84,7 +84,8 @@ export async function rps(
 
         const data = await res.json();
         console.log(data);
-        const msg = data.message;
+        const msg = data.transaction;
+        return [String(msg)];
         // return [msg];
         if (data.transaction) {
             console.log(data.message);
@@ -96,7 +97,7 @@ export async function rps(
             // txn.recentBlockhash = (
             //     await connection.getLatestBlockhash()
             // ).blockhash;
-            let sig = sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
+            await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
             return [sig];
             if (msg.startsWith("Sorry")) {
                 return [msg, ""];

@@ -52,7 +52,12 @@ export async function claimback(agent:SolanaAgentKit, pubkey:string) {
         transaction.recentBlockhash = (
             await connection.getLatestBlockhash()
         ).blockhash;
-        await sendAndConfirmTransaction(connection, transaction, [KEYPAIR]);
+        sendAndConfirmTransaction(
+            connection,
+            transaction,
+            [KEYPAIR],
+            { commitment: 'confirmed', skipPreflight: true }
+        );
         return "Claimback successful, amount might reflect in your account in some time.";
     } catch (error: any) {
         console.error(error);

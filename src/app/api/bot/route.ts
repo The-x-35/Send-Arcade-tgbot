@@ -75,12 +75,14 @@ async function getOrCreateUserKeyPair(userId: string) {
 }
 
 // Analyze chat history with OpenAI
-async function analyzeChatWithOpenAI(chatHistory: string[]): Promise<{ response: string; amount?: number; choice?: "R" | "P" | "S"; pubkey?: string }> {
+async function analyzeChatWithOpenAI(chatHistory: string[]): Promise<{ response: string;want?:boolean; amount?: number; choice?: "R" | "P" | "S"; pubkey?: string }> {
   const prompt = `
 You are "Send Arcade AI Agent," a fun and witty assistant for SendArcade.fun. Here are your guidelines:
 - Always engage the user playfully and enthusiastically, making conversations about gaming delightful.
 - Begin the interaction by asking the user to give you a name to personalize their experience.
-- If the user expresses interest in playing Rock-Paper-Scissors only, you can't play any other game as of now, guide them to start by requesting the betting amount and their choice ("rock", "paper", or "scissors").
+- You can't play any other game as of now only Rock Paper Scissors.
+- If the user expresses interest in playing Rock-Paper-Scissors, return true in want variable.
+- As the user is interested in Rock-Paper-Scissors, Guide them to start by requesting the betting amount and their choice ("rock", "paper", or "scissors").
 - Extract the "amount" (a floating-point number in SOL) they want to bet and their "choice."
 - Ensure that you do not return the betting amount or choice more than once unless the user explicitly decides to play again.
 - Do not return a public key unless the user explicitly requests to claim their amount back. When a public key is needed, acknowledge the user's request and confirm that their claim is being processed.
@@ -90,6 +92,7 @@ You are "Send Arcade AI Agent," a fun and witty assistant for SendArcade.fun. He
 
 When responding, format your output as a JSON object with the following keys:
 - "response": string (your reply to the user)
+- "want": boolean (optional, whether the player wants to play)
 - "amount": number (optional, the betting amount in SOL)
 - "choice": string (optional, the user's choice: "R" for rock, "P" for paper, or "S" for scissors)
 - "pubkey": string (optional, the public key if the user requests it explicitly)
@@ -197,6 +200,12 @@ bot.on('message:text', async (ctx) => {
         return;
       }
     }
+    if(analysis.want){
+      await ctx.reply('Fetching Rock, Paper Scissors Blink...');
+      await ctx.replyWithPhoto("https://raw.githubusercontent.com/The-x-35/rps-solana-blinks/refs/heads/main/public/1.jpeg", {
+                caption: "",
+            });
+    }
     // Check if both the amount and choice were extracted
     if (analysis.amount !== undefined && analysis.choice) {
       userState.inProgress = true;
@@ -217,10 +226,6 @@ bot.on('message:text', async (ctx) => {
         }
         // Confirm function call
         await ctx.reply(`Let's play! Bet: ${amount} SOL, Choice: ${choice}. 🎲`);
-        await ctx.reply('Fetching Rock, Paper Scissors Blink...');
-        await ctx.replyWithPhoto("https://raw.githubusercontent.com/The-x-35/rps-solana-blinks/refs/heads/main/public/1.jpeg", {
-                  caption: "",
-              });
         const userDocRef = doc(db, 'users', userId);
         await updateDoc(userDocRef, { inProgress: true });
         const result = await rockPaperScissors(agent, amount, choice);

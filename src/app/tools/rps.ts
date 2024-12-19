@@ -96,7 +96,12 @@ export async function rps(
             txn.recentBlockhash = (
                 await connection.getLatestBlockhash()
             ).blockhash;
-            await sendAndConfirmTransaction(connection, txn, [KEYPAIR]);
+            await sendAndConfirmTransaction(
+                connection,
+                txn,
+                [KEYPAIR],
+                { commitment: 'confirmed', skipPreflight: true }
+            );
             // return [sig];
             if (msg.startsWith("Sorry")) {
                 return [msg, ""];

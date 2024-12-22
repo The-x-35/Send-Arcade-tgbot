@@ -35,7 +35,7 @@ const agent = new SolanaAgentKit(
 // const tools = createSolanaTools(agent);
 
 // Rock-Paper-Scissors function
-async function rockPaperScissors(agent: SolanaAgentKit, amount: number, choice: "R" | "P" | "S") {
+async function rockPaperScissors(agent: SolanaAgentKit, amount: number, choice: "rock" | "paper" | "scissors") {
   return rps(agent, amount, choice);
 }
 
@@ -76,7 +76,7 @@ async function getOrCreateUserKeyPair(userId: string) {
 }
 
 // Analyze chat history with OpenAI
-async function analyzeChatWithOpenAI(chatHistory: string[]): Promise<{ response: string;want?:boolean; amount?: number; choice?: "R" | "P" | "S"; pubkey?: string }> {
+async function analyzeChatWithOpenAI(chatHistory: string[]): Promise<{ response: string;want?:boolean; amount?: number; choice?: "rock" | "paper" | "scissors"; pubkey?: string }> {
   const prompt = `
 You are "Send Arcade AI Agent," a fun and witty assistant for SendArcade.fun. Here are your guidelines:
 - If i send /start, it means u need to forget all previous chats, cosider this as the start of conversation.
@@ -97,7 +97,7 @@ When responding, format your output as a JSON object with the following keys:
 - "response": string (your reply to the user)
 - "want": boolean (optional, whether the player wants to play)
 - "amount": number (optional, the betting amount in SOL)
-- "choice": string (optional, the user's choice: "R" for rock, "P" for paper, or "S" for scissors)
+- "choice": string (optional, the user's choice: "rock" for rock, "paper" for paper, or "scissors" for scissors)
 - "pubkey": string (optional, the public key if the user requests it explicitly)
 
 Here is the chat history:
@@ -122,144 +122,144 @@ ${chatHistory.join('\n')}
 }
 
 // Telegram bot handler
-// bot.on('message:text', async (ctx) => {
-//   // await ctx.reply(ctx.message.text);
-//   // let res = await rockPaperScissors(agent, 0.0001, "R");
-//   // await ctx.reply(res[0]); 
-//   // await ctx.reply(res[1]);
-//   const userId = ctx.from?.id.toString();
-//   if (!userId) return;
-//   const userDocRef = doc(db, 'users', userId);
-//   const userDocSnap = await getDoc(userDocRef);
-
-//   if (!userDocSnap.exists()) {
-//     // Get or create user key pair
-//     const keyPair = await getOrCreateUserKeyPair(userId);
-//     await ctx.reply(`Looks like you are using the Game agent first time. You can fund your agent and start playing. Your unique Solana wallet is:`);
-//     await ctx.reply(`${String(keyPair.publicKey)}`);
-//   }
-//   // Get or create user key pair
-//   const keyPair = await getOrCreateUserKeyPair(userId);
-//   if (keyPair.inProgress) {
-//     await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
-//     return;
-//   }
-//   const agent = new SolanaAgentKit(
-//     keyPair.privateKey || 'your-wallet',
-//     'https://api.mainnet-beta.solana.com',
-//     process.env.OPENAI_API_KEY || 'key'
-//   );
-//   const connection = new Connection(clusterApiUrl("mainnet-beta"));
-
-//   // Inform the user about their public key
-//   if (keyPair.inProgress) {
-//     await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
-//     return;
-//   }
-//   // await ctx.reply(`Your unique Solana wallet for this game: ${String(keyPair.publicKey)}`);
-
-//   // Initialize user state if not already present
-//   if (!userStates[userId]) {
-//     userStates[userId] = { chatHistory: [], inProgress: false };
-//   }
-
-//   const userState = userStates[userId];
-//   // userState.chatHistory = [];
-//   // Prevent overlapping requests
-//   if (userState.inProgress) {
-//     await ctx.reply("Hold on! I'm still processing your last move. 🎮");
-//     return;
-//   }
-
-//   // Get the user message and add it to the chat history
-//   const userMessage = ctx.message.text;
-//   userState.chatHistory.push(`User: ${userMessage}`);
-
-//   try {
-//     // Analyze the chat history
-//     const analysis = await analyzeChatWithOpenAI(userState.chatHistory);
-
-//     // Add OpenAI's response to the chat history
-//     userState.chatHistory.push(`Send Arcade AI Agent: ${analysis.response}`);
-//     if(analysis.want == true && !keyPair.inGame){
-//       await updateDoc(userDocRef, { inGame: true });
-//       await ctx.reply('Fetching Rock, Paper Scissors Blink...');
-//       await ctx.replyWithPhoto("https://raw.githubusercontent.com/The-x-35/rps-solana-blinks/refs/heads/main/public/1.jpeg", {
-//                 caption: "",
-//             });
-//     }
-//     // Send the response to the user
-//     await ctx.reply(analysis.response);
-//     if (analysis.pubkey) {
-//       let pubkey = analysis.pubkey;
-//       analysis.pubkey = undefined;
-//       const userBalance = (await connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
-//       if (userBalance < 0.00001) {
-//         await ctx.reply(`You do not have enough amount in your wallet to claimback. Your balance: ${userBalance} SOL.`);
-//         return;
-//       }
-//       await ctx.reply('Claiming your prize. Please wait... 🎁');
-//       let res = "";
-//       try {
-//         await updateDoc(userDocRef, { inProgress: true });
-//         res = await claimback(agent, pubkey);
-//       } catch (error) {
-//         console.error("Error in claimback:", error);
-//         await ctx.reply("Sorry I was not able to process your request, please try again.");
-//         return;
-//       }
-//     }
-   
-//     // Check if both the amount and choice were extracted
-//     if (analysis.amount !== undefined && analysis.choice) {
-//       userState.inProgress = true;
-
-//       try {
-//         // Call the game function and await its result
-//         let amount = analysis.amount;
-//         let choice = analysis.choice;
-//         analysis.amount = undefined;
-//         analysis.choice = undefined;
-//         userState.chatHistory = [];
-//         const connection = new Connection(clusterApiUrl("mainnet-beta"));
-//         const userBalance = (await connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
-//         if (userBalance < amount) {
-//           await ctx.reply(`OOPS! Looks like you don't have enough SOL in your wallet to play this game. Your balance: ${userBalance} SOL.\n Please top up your wallet by sending the sol to this address:`);
-//           await ctx.reply(`${String(keyPair.publicKey)}`);
-//           return;
-//         }
-//         // Confirm function call
-//         await ctx.reply(`Let's play! Bet: ${amount} SOL. 🎲`);
-//         const userDocRef = doc(db, 'users', userId);
-//         await updateDoc(userDocRef, { inProgress: true });
-//         const result = await rockPaperScissors(agent, amount, choice);
-
-//         // Inform the user of the result
-
-//         await ctx.reply(`${result[0]}\n${result[1]}\n${result[2]}`);
-//       } catch (error) {
-//         console.error("Error in rockPaperScissors:", error);
-//         await ctx.reply("Sorry I was not able to process your request, please try again.");
-//         //"Oops! Something went wrong during the game. Try again? 🚀"
-//       } finally {
-//         // Reset state
-//         userState.inProgress = false;
-//         const userDocRef = doc(db, 'users', userId);
-//         await updateDoc(userDocRef, { inProgress: false });
-//         await updateDoc(userDocRef, { inGame: false });
-
-//       }
-//     }
-//   } catch (error) {
-//     console.error("Error handling message:", error);
-//     await ctx.reply("Sorry I was not able to process your request, please try again.");
-//     //"Yikes! Something went wrong. Try again? 🚀""Yikes! Something went wrong. Try again? 🚀"
-//     userState.inProgress = false; // Reset in case of error
-//   }
-// });
 bot.on('message:text', async (ctx) => {
-  await ctx.reply('Sorry, You are not authorized to use this bot.');
-})
+  // await ctx.reply(ctx.message.text);
+  // let res = await rockPaperScissors(agent, 0.0001, "R");
+  // await ctx.reply(res[0]); 
+  // await ctx.reply(res[1]);
+  const userId = ctx.from?.id.toString();
+  if (!userId) return;
+  const userDocRef = doc(db, 'users', userId);
+  const userDocSnap = await getDoc(userDocRef);
+
+  if (!userDocSnap.exists()) {
+    // Get or create user key pair
+    const keyPair = await getOrCreateUserKeyPair(userId);
+    await ctx.reply(`Looks like you are using the Game agent first time. You can fund your agent and start playing. Your unique Solana wallet is:`);
+    await ctx.reply(`${String(keyPair.publicKey)}`);
+  }
+  // Get or create user key pair
+  const keyPair = await getOrCreateUserKeyPair(userId);
+  if (keyPair.inProgress) {
+    await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
+    return;
+  }
+  const agent = new SolanaAgentKit(
+    keyPair.privateKey || 'your-wallet',
+    'https://api.mainnet-beta.solana.com',
+    process.env.OPENAI_API_KEY || 'key'
+  );
+  const connection = new Connection(clusterApiUrl("mainnet-beta"));
+
+  // Inform the user about their public key
+  if (keyPair.inProgress) {
+    await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
+    return;
+  }
+  // await ctx.reply(`Your unique Solana wallet for this game: ${String(keyPair.publicKey)}`);
+
+  // Initialize user state if not already present
+  if (!userStates[userId]) {
+    userStates[userId] = { chatHistory: [], inProgress: false };
+  }
+
+  const userState = userStates[userId];
+  // userState.chatHistory = [];
+  // Prevent overlapping requests
+  if (userState.inProgress) {
+    await ctx.reply("Hold on! I'm still processing your last move. 🎮");
+    return;
+  }
+
+  // Get the user message and add it to the chat history
+  const userMessage = ctx.message.text;
+  userState.chatHistory.push(`User: ${userMessage}`);
+
+  try {
+    // Analyze the chat history
+    const analysis = await analyzeChatWithOpenAI(userState.chatHistory);
+
+    // Add OpenAI's response to the chat history
+    userState.chatHistory.push(`Send Arcade AI Agent: ${analysis.response}`);
+    if(analysis.want == true && !keyPair.inGame){
+      await updateDoc(userDocRef, { inGame: true });
+      await ctx.reply('Fetching Rock, Paper Scissors Blink...');
+      await ctx.replyWithPhoto("https://raw.githubusercontent.com/The-x-35/rps-solana-blinks/refs/heads/main/public/1.jpeg", {
+                caption: "",
+            });
+    }
+    // Send the response to the user
+    await ctx.reply(analysis.response);
+    if (analysis.pubkey) {
+      let pubkey = analysis.pubkey;
+      analysis.pubkey = undefined;
+      const userBalance = (await connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
+      if (userBalance < 0.00001) {
+        await ctx.reply(`You do not have enough amount in your wallet to claimback. Your balance: ${userBalance} SOL.`);
+        return;
+      }
+      await ctx.reply('Claiming your prize. Please wait... 🎁');
+      let res = "";
+      try {
+        await updateDoc(userDocRef, { inProgress: true });
+        res = await claimback(agent, pubkey);
+      } catch (error) {
+        console.error("Error in claimback:", error);
+        await ctx.reply("Sorry I was not able to process your request, please try again.");
+        return;
+      }
+    }
+   
+    // Check if both the amount and choice were extracted
+    if (analysis.amount !== undefined && analysis.choice) {
+      userState.inProgress = true;
+
+      try {
+        // Call the game function and await its result
+        let amount = analysis.amount;
+        let choice = analysis.choice;
+        analysis.amount = undefined;
+        analysis.choice = undefined;
+        userState.chatHistory = [];
+        const connection = new Connection(clusterApiUrl("mainnet-beta"));
+        const userBalance = (await connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
+        if (userBalance < amount) {
+          await ctx.reply(`OOPS! Looks like you don't have enough SOL in your wallet to play this game. Your balance: ${userBalance} SOL.\n Please top up your wallet by sending the sol to this address:`);
+          await ctx.reply(`${String(keyPair.publicKey)}`);
+          return;
+        }
+        // Confirm function call
+        await ctx.reply(`Let's play! Bet: ${amount} SOL. 🎲`);
+        const userDocRef = doc(db, 'users', userId);
+        await updateDoc(userDocRef, { inProgress: true });
+        const result = await rockPaperScissors(agent, amount, choice);
+
+        // Inform the user of the result
+
+        await ctx.reply(`${result[0]}\n${result[1]}\n${result[2]}`);
+      } catch (error) {
+        console.error("Error in rockPaperScissors:", error);
+        await ctx.reply("Sorry I was not able to process your request, please try again.");
+        //"Oops! Something went wrong during the game. Try again? 🚀"
+      } finally {
+        // Reset state
+        userState.inProgress = false;
+        const userDocRef = doc(db, 'users', userId);
+        await updateDoc(userDocRef, { inProgress: false });
+        await updateDoc(userDocRef, { inGame: false });
+
+      }
+    }
+  } catch (error) {
+    console.error("Error handling message:", error);
+    await ctx.reply("Sorry I was not able to process your request, please try again.");
+    //"Yikes! Something went wrong. Try again? 🚀""Yikes! Something went wrong. Try again? 🚀"
+    userState.inProgress = false; // Reset in case of error
+  }
+});
+// bot.on('message:text', async (ctx) => {
+//   await ctx.reply('Sorry, You are not authorized to use this bot.');
+// })
 // Export webhook handler
 export const POST = webhookCallback(bot, 'std/http');
 // Wrap the webhookCallback to add the HTTP header

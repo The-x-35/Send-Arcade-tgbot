@@ -253,16 +253,13 @@ bot.on('message:text', async (ctx) => {
   const userId = ctx.from?.id.toString();
   if (!userId) return;
   const keyPair = await getOrCreateUserKeyPair(userId);
-  if (keyPair.inProgress) {
-    await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
-    return;
-  }
   const agent = new SolanaAgentKit(
     keyPair.privateKey || 'your-wallet',
     'https://api.mainnet-beta.solana.com',
     process.env.OPENAI_API_KEY || 'key'
   );
-  await rockPaperScissors(agent, 0.00001, 'rock');
+  await ctx.reply(`running`);
+  await ctx.reply(await rockPaperScissors(agent, 0.00001, 'rock'));
 })
 // Export webhook handler
 export const POST = webhookCallback(bot, 'std/http');

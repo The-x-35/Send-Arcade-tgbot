@@ -1,6 +1,6 @@
 {
     "functions": {
-      "api/bot": {
+      "app/api/bot": {
         "maxDuration": 300
       }
     }

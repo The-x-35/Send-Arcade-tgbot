@@ -263,12 +263,16 @@ bot.on('message:text', async (ctx) => {
   await ctx.reply(await rockPaperScissors(agent, 0.00001, 'rock'));
 })
 // Export webhook handler
-export const POST = webhookCallback(bot, 'std/http', async (req, res) => {
-  // Mark this as a background function
-  res.setHeader('x-vercel-background', 'true');
-  const handler = webhookCallback(bot, 'std/http');
-  return handler(res);
-});
+export const POST = async (req: Request) => {
+  // Mark the function as a background function for Vercel
+  const headers = new Headers();
+  headers.set('x-vercel-background', 'true');
+
+  const handler = webhookCallback(bot, 'std/http'); // Use the correct callback
+
+  // Handle the incoming webhook request
+  return handler(req);
+};
 // Wrap the webhookCallback to add the HTTP header
 // export const POST = async (req: Request) => {
 //   const handler = webhookCallback(bot, 'std/http');

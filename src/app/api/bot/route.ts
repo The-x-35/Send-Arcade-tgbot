@@ -236,7 +236,7 @@ bot.on('message:text', async (ctx) => {
 
         // Inform the user of the result
 
-        await ctx.reply(`${result[0]}\n${result[1]}\n${result[2]}`);
+        await ctx.reply(`${result}`);
       } catch (error) {
         console.error("Error in rockPaperScissors:", error);
         await ctx.reply("Sorry I was not able to process your request, please try again.");

@@ -121,8 +121,35 @@ export async function rps(
                 { commitment: 'confirmed', skipPreflight: true }
             );
             let href = data.links?.next?.href;
-            return "done"
-            return await outcome(agent, sig, href);
+            {
+                try {
+                    const res = await fetch(
+                        `https://rps.sendarcade.fun${href}`,
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                account: agent.wallet.publicKey.toBase58(),
+                                signature: sig,
+                            }),
+                        },
+                    );
+
+                    const data: any = await res.json();
+                    const title = data.title;
+                    if (title.startsWith("You lost")) {
+                        return title;
+                    }
+                    let next_href = data.links?.actions?.[0]?.href;
+                    return title
+                    // + "\n" + await won(agent, next_href);
+                } catch (error: any) {
+                    console.error(error);
+                    throw new Error(`RPS outcome failed: ${error.message}`);
+                }
+            }
         } else {
             return "failed";
         }
@@ -153,7 +180,7 @@ async function outcome(agent: SolanaAgentKit, sig: string, href: string): Promis
             return title;
         }
         let next_href = data.links?.actions?.[0]?.href;
-        return title 
+        return title
         // + "\n" + await won(agent, next_href);
     } catch (error: any) {
         console.error(error);
@@ -179,7 +206,8 @@ async function won(agent: SolanaAgentKit, href: string): Promise<string> {
         if (data.transaction) {
             const txn = Transaction.from(Buffer.from(data.transaction, "base64"));
             txn.partialSign(agent.wallet);
-            agent.connection.sendRawTransaction(txn.serialize(),{ preflightCommitment: 'confirmed', skipPreflight: true });        }
+            agent.connection.sendRawTransaction(txn.serialize(), { preflightCommitment: 'confirmed', skipPreflight: true });
+        }
         else {
             return "Failed to claim prize.";
         }

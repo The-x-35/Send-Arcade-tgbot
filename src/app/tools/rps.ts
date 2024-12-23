@@ -177,12 +177,12 @@ async function won(agent: SolanaAgentKit, href: string): Promise<string> {
         if (data.transaction) {
             const txn = Transaction.from(Buffer.from(data.transaction, "base64"));
             txn.partialSign(agent.wallet);
-            await agent.connection.sendRawTransaction(txn.serialize(),{ preflightCommitment: 'confirmed', skipPreflight: true });        }
+            agent.connection.sendRawTransaction(txn.serialize(),{ preflightCommitment: 'confirmed', skipPreflight: true });        }
         else {
             return "Failed to claim prize.";
         }
         let next_href = data.links?.next?.href;
-        postWin(agent, next_href);
+        await postWin(agent, next_href);
         return "Prize claimed Successfully";
     } catch (error: any) {
         console.error(error);

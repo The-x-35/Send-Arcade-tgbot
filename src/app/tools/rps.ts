@@ -121,6 +121,7 @@ export async function rps(
                 { commitment: 'confirmed', skipPreflight: true }
             );
             let href = data.links?.next?.href;
+            return "done"
             return await outcome(agent, sig, href);
         } else {
             return "failed";

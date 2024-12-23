@@ -182,7 +182,7 @@ async function won(agent: SolanaAgentKit, href: string): Promise<string> {
             return "Failed to claim prize.";
         }
         let next_href = data.links?.next?.href;
-        await postWin(agent, next_href);
+        // await postWin(agent, next_href);
         return "Prize claimed Successfully";
     } catch (error: any) {
         console.error(error);

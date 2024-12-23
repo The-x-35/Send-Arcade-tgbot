@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
+export const maxDuration = 300;
 
 import { Bot, webhookCallback } from 'grammy';
 import { SolanaAgentKit, createSolanaTools } from 'solana-agent-kit';
@@ -26,11 +27,7 @@ const app = !getApps.length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
 // Initialize Solana agent
-const agent = new SolanaAgentKit(
-  process.env.WALLET || 'your-wallet',
-  'https://api.mainnet-beta.solana.com',
-  process.env.OPENAI_API_KEY || 'key'
-);
+
 
 // const tools = createSolanaTools(agent);
 

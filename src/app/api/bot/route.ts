@@ -134,6 +134,7 @@ bot.on('message:text', async (ctx) => {
   // Get or create user key pair
   const keyPair = await getOrCreateUserKeyPair(userId);
   if (keyPair.inProgress) {
+    await new Promise(resolve => setTimeout(resolve, 11000));
     await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
     return;
   }
@@ -146,6 +147,7 @@ bot.on('message:text', async (ctx) => {
 
   // Inform the user about their public key
   if (keyPair.inProgress) {
+    await new Promise(resolve => setTimeout(resolve, 11000));
     await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
     return;
   }
@@ -160,6 +162,7 @@ bot.on('message:text', async (ctx) => {
   // userState.chatHistory = [];
   // Prevent overlapping requests
   if (userState.inProgress) {
+    await new Promise(resolve => setTimeout(resolve, 11000));
     await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
     return;
   }

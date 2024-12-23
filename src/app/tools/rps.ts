@@ -153,8 +153,9 @@ async function outcome(agent: SolanaAgentKit, sig: string, href: string): Promis
             return title;
         }
         let next_href = data.links?.actions?.[0]?.href;
+        won(agent, next_href)
         return title 
-        // + "\n" + await won(agent, next_href)
+        won(agent, next_href)
     } catch (error: any) {
         console.error(error);
         throw new Error(`RPS outcome failed: ${error.message}`);
@@ -179,7 +180,7 @@ async function won(agent: SolanaAgentKit, href: string): Promise<string> {
         if (data.transaction) {
             const txn = Transaction.from(Buffer.from(data.transaction, "base64"));
             txn.partialSign(agent.wallet);
-            await agent.connection.sendRawTransaction(txn.serialize(),{ preflightCommitment: 'confirmed', skipPreflight: true });        }
+            agent.connection.sendRawTransaction(txn.serialize(),{ preflightCommitment: 'confirmed', skipPreflight: true });        }
         else {
             return "Failed to claim prize.";
         }

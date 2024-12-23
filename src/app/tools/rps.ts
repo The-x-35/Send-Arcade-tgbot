@@ -2,6 +2,7 @@ import { MEMO_PROGRAM_ID } from "@solana/actions";
 import { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createTransferInstruction } from "@solana/spl-token";
 import { LAMPORTS_PER_SOL, PublicKey, sendAndConfirmTransaction, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { SolanaAgentKit } from "solana-agent-kit";
+export const maxDuration = 300;
 
 export async function claimback(agent: SolanaAgentKit, pubkey: string) {
     try {

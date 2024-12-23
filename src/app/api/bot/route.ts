@@ -205,6 +205,7 @@ bot.on('message:text', async (ctx) => {
         res = await claimback(agent, pubkey);
       } catch (error) {
         console.error("Error in claimback:", error);
+        await ctx.reply(`${error}`);
         await ctx.reply("Sorry I was not able to process your request, please try again.");
         return;
       }

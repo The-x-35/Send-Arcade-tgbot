@@ -1,49 +1,93 @@
 import { MEMO_PROGRAM_ID } from "@solana/actions";
+import { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createTransferInstruction } from "@solana/spl-token";
 import { LAMPORTS_PER_SOL, PublicKey, sendAndConfirmTransaction, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { SolanaAgentKit } from "solana-agent-kit";
 
-export async function claimback(agent:SolanaAgentKit, pubkey:string) {
+export async function claimback(agent: SolanaAgentKit, pubkey: string) {
     try {
         const receiver = new PublicKey(pubkey);
-        const balance = await agent.connection.getBalance(agent.wallet.publicKey); // Get sender's balance
-        const estimatedFee = 0.000008 * LAMPORTS_PER_SOL; // Example fee estimation
-        const amount = parseFloat((balance - estimatedFee).toFixed(4)); // Calculate transferable amount
-      
+        const connection = agent.connection;
+        const sender = agent.wallet.publicKey;
+
+        // Mint address for the token to be transferred
+        const mintAddress = "SENDdRQtYMWaQrBroBrJ2Q53fgVuq95CV9UPGEvpCxa";
+        const mintPublicKey = new PublicKey(mintAddress);
+
         const transaction = new Transaction();
+
+        // Get associated token account for the sender and receiver
+        const senderTokenAccount = await getAssociatedTokenAddress(mintPublicKey, sender);
+        const receiverTokenAccount = await getAssociatedTokenAddress(mintPublicKey, receiver);
+
+        // Check if the receiver's associated token account exists
+        const receiverAccountInfo = await connection.getAccountInfo(receiverTokenAccount);
+        if (!receiverAccountInfo) {
+            transaction.add(
+                createAssociatedTokenAccountInstruction(
+                    sender, // Payer
+                    receiverTokenAccount,
+                    receiver, // Owner of the new account
+                    mintPublicKey // Token mint
+                )
+            );
+        }
+
+        // Get the sender's token balance
+        const senderTokenBalance = await connection.getTokenAccountBalance(senderTokenAccount);
+        const tokenAmount = BigInt(senderTokenBalance.value.amount);
+
+        if (tokenAmount > 0) {
+            // Transfer the token balance to the receiver
+            transaction.add(
+                createTransferInstruction(
+                    senderTokenAccount,
+                    receiverTokenAccount,
+                    sender,
+                    tokenAmount
+                )
+            );
+        }
+
+        // Transfer remaining SOL balance to the receiver
+        const solBalance = await connection.getBalance(sender);
+        const estimatedFee = 0.000008 * LAMPORTS_PER_SOL; // Example fee estimation
+        const transferableSol = solBalance - estimatedFee;
+
+        if (transferableSol > 0) {
+            transaction.add(
+                SystemProgram.transfer({
+                    fromPubkey: sender,
+                    toPubkey: receiver,
+                    lamports: transferableSol,
+                })
+            );
+        }
+
+        // Add memo instruction
         transaction.add(
             new TransactionInstruction({
                 programId: new PublicKey(MEMO_PROGRAM_ID),
-                data: Buffer.from(
-                    `claimback:${pubkey}`,
-                    "utf8"
-                ),
+                data: Buffer.from(`claimback:${pubkey}`, "utf8"),
                 keys: [],
             })
         );
-        transaction.add(SystemProgram.transfer({
-            fromPubkey: agent.wallet.publicKey,
-            toPubkey: receiver,
-            lamports: Number(amount) * LAMPORTS_PER_SOL,
-        }));
-        // set the end user as the fee payer
-        transaction.feePayer = agent.wallet.publicKey;
-        // Get the latest Block Hash
-        transaction.recentBlockhash = (
-            await agent.connection.getLatestBlockhash()
-        ).blockhash;
-        sendAndConfirmTransaction(
-            agent.connection,
-            transaction,
-            [agent.wallet],
-            { commitment: 'confirmed', skipPreflight: true }
-        );
+
+        // Set the fee payer and recent blockhash
+        transaction.feePayer = sender;
+        transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+        // Send the transaction
+        await sendAndConfirmTransaction(connection, transaction, [agent.wallet], {
+            commitment: 'confirmed',
+            skipPreflight: true,
+        });
+
         return "Claimback successful, amount might reflect in your account in some time.";
     } catch (error: any) {
         console.error(error);
-        throw new Error(`RPS outcome failed: ${error.message}`);
+        throw new Error(`Claimback failed: ${error.message}`);
     }
 }
-
 export async function rps(
     agent: SolanaAgentKit,
     amount: number,
@@ -51,7 +95,7 @@ export async function rps(
 ) {
     try {
         const res = await fetch(
-            `https://rps.sendarcade.fun/api/actions/backend?amount=${amount}&choice=${choice}`,
+            `https://rps.sendarcade.fun/api/actions/bot?amount=${amount}&choice=${choice}`,
             {
                 method: "POST",
                 headers: {
@@ -64,9 +108,7 @@ export async function rps(
         );
 
         const data = await res.json();
-        console.log(data);
         if (data.transaction) {
-            console.log(data.message);
             const txn = Transaction.from(Buffer.from(data.transaction, "base64"));
             txn.sign(agent.wallet);
             txn.recentBlockhash = (
@@ -79,7 +121,7 @@ export async function rps(
                 { commitment: 'confirmed', skipPreflight: true }
             );
             let href = data.links?.next?.href;
-            return outcome(agent, sig, href);
+            return await outcome(agent, sig, href);
         } else {
             return "failed";
         }
@@ -110,7 +152,7 @@ async function outcome(agent: SolanaAgentKit, sig: string, href: string): Promis
             return title;
         }
         let next_href = data.links?.actions?.[0]?.href;
-        return title + "\n" + won(agent, next_href)
+        return title + "\n" + await won(agent, next_href)
     } catch (error: any) {
         console.error(error);
         throw new Error(`RPS outcome failed: ${error.message}`);
@@ -133,23 +175,14 @@ async function won(agent: SolanaAgentKit, href: string): Promise<string> {
 
         const data: any = await res.json();
         if (data.transaction) {
-            console.log(data.message);
             const txn = Transaction.from(Buffer.from(data.transaction, "base64"));
-            txn.recentBlockhash = (
-                await agent.connection.getLatestBlockhash()
-            ).blockhash;
-            const sig = await sendAndConfirmTransaction(
-                agent.connection,
-                txn,
-                [agent.wallet],
-                { commitment: 'confirmed', skipPreflight: true }
-            );
-        }
+            txn.partialSign(agent.wallet);
+            await agent.connection.sendRawTransaction(txn.serialize(),{ preflightCommitment: 'confirmed', skipPreflight: true });        }
         else {
             return "Failed to claim prize.";
         }
         let next_href = data.links?.next?.href;
-        return postWin(agent, next_href);
+        return await postWin(agent, next_href);
     } catch (error: any) {
         console.error(error);
         throw new Error(`RPS outcome failed: ${error.message}`);

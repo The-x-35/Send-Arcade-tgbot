@@ -108,7 +108,7 @@ ${chatHistory.join('\n')}
     model: 'gpt-3.5-turbo',
     messages: [{ role: 'system', content: prompt }],
     max_tokens: 300,
-    temperature: 0.8,
+    temperature: 0,
   });
 
   try {

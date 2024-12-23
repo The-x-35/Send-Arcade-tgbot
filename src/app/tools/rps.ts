@@ -182,7 +182,8 @@ async function won(agent: SolanaAgentKit, href: string): Promise<string> {
             return "Failed to claim prize.";
         }
         let next_href = data.links?.next?.href;
-        return await postWin(agent, next_href);
+        postWin(agent, next_href);
+        return "Prize claimed Successfully";
     } catch (error: any) {
         console.error(error);
         throw new Error(`RPS outcome failed: ${error.message}`);

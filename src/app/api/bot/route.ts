@@ -229,11 +229,11 @@ bot.on('message:text', async (ctx) => {
         await ctx.reply(`Let's play! Bet: ${amount} SOL. 🎲`);
         const userDocRef = doc(db, 'users', userId);
         await updateDoc(userDocRef, { inProgress: true });
+        setImmediate(async () => {
         const result = await rockPaperScissors(agent, amount, choice);
-
-        // Inform the user of the result
-
         await ctx.reply(`${result}`);
+        });
+        // Inform the user of the result  
       } catch (error) {
         console.error("Error in rockPaperScissors:", error);
         await ctx.reply("Sorry I was not able to process your request, please try again.");

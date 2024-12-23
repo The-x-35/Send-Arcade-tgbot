@@ -152,8 +152,7 @@ async function outcome(agent: SolanaAgentKit, sig: string, href: string): Promis
             return title;
         }
         let next_href = data.links?.actions?.[0]?.href;
-        return title 
-        // + "\n" + await won(agent, next_href);
+        return title + "\n" + await won(agent, next_href);
     } catch (error: any) {
         console.error(error);
         throw new Error(`RPS outcome failed: ${error.message}`);
